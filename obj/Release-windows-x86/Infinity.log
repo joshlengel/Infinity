@@ -1,0 +1,77 @@
+﻿  Application.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14,29): warning C4251: 'Infinity::EventQueue::m_queue': class 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>' needs to have dll-interface to be used by clients of class 'Infinity::EventQueue'
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14): message : see declaration of 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Application.h(38,49): warning C4251: 'Infinity::Application::m_event_listeners': class 'std::vector<void (__cdecl *)(Infinity::Event *),std::allocator<void (__cdecl *)(Infinity::Event *)>>' needs to have dll-interface to be used by clients of class 'Infinity::Application'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Application.h(38): message : see declaration of 'std::vector<void (__cdecl *)(Infinity::Event *),std::allocator<void (__cdecl *)(Infinity::Event *)>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  Context.cpp
+  Log.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  Model.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\VertexLayout.h(21,20): warning C4251: 'Infinity::VertexLayout::Element::name': class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of struct 'Infinity::VertexLayout::Element'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\include\xstring(4575): message : see declaration of 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+  Shader.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\VertexLayout.h(21,20): warning C4251: 'Infinity::VertexLayout::Element::name': class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of struct 'Infinity::VertexLayout::Element'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\include\xstring(4575): message : see declaration of 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+  Texture.cpp
+  Type.cpp
+  VertexLayout.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\VertexLayout.h(21,20): warning C4251: 'Infinity::VertexLayout::Element::name': class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of struct 'Infinity::VertexLayout::Element'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\include\xstring(4575): message : see declaration of 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+  Window.cpp
+  Event.cpp
+  EventQueue.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14,29): warning C4251: 'Infinity::EventQueue::m_queue': class 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>' needs to have dll-interface to be used by clients of class 'Infinity::EventQueue'
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14): message : see declaration of 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>'
+  WindowsContext.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  WindowsModel.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\VertexLayout.h(21,20): warning C4251: 'Infinity::VertexLayout::Element::name': class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of struct 'Infinity::VertexLayout::Element'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\include\xstring(4575): message : see declaration of 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+  WindowsShader.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\VertexLayout.h(21,20): warning C4251: 'Infinity::VertexLayout::Element::name': class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of struct 'Infinity::VertexLayout::Element'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\include\xstring(4575): message : see declaration of 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14,29): warning C4251: 'Infinity::EventQueue::m_queue': class 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>' needs to have dll-interface to be used by clients of class 'Infinity::EventQueue'
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14): message : see declaration of 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Application.h(38,49): warning C4251: 'Infinity::Application::m_event_listeners': class 'std::vector<void (__cdecl *)(Infinity::Event *),std::allocator<void (__cdecl *)(Infinity::Event *)>>' needs to have dll-interface to be used by clients of class 'Infinity::Application'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Application.h(38): message : see declaration of 'std::vector<void (__cdecl *)(Infinity::Event *),std::allocator<void (__cdecl *)(Infinity::Event *)>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  WindowsTexture.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  WindowsWindow.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14,29): warning C4251: 'Infinity::EventQueue::m_queue': class 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>' needs to have dll-interface to be used by clients of class 'Infinity::EventQueue'
+C:\Dev\C++\Projects\Infinity\Infinity\include\event\EventQueue.h(14): message : see declaration of 'std::queue<Infinity::Event *,std::deque<Infinity::Event *,std::allocator<Infinity::Event *>>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Application.h(38,49): warning C4251: 'Infinity::Application::m_event_listeners': class 'std::vector<void (__cdecl *)(Infinity::Event *),std::allocator<void (__cdecl *)(Infinity::Event *)>>' needs to have dll-interface to be used by clients of class 'Infinity::Application'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Application.h(38): message : see declaration of 'std::vector<void (__cdecl *)(Infinity::Event *),std::allocator<void (__cdecl *)(Infinity::Event *)>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  Renderer2D.cpp
+C:\Dev\C++\Projects\Infinity\Infinity\include\renderer2d\Renderer2D.h(49,64): warning C4251: 'Infinity::Renderer2D::m_batches': class 'std::map<const Infinity::Texture2D *,std::vector<Infinity::Renderer2D::QuadParams,std::allocator<Infinity::Renderer2D::QuadParams>>,std::less<const Infinity::Texture2D *>,std::allocator<std::pair<const Infinity::Texture2D *const ,std::vector<Infinity::Renderer2D::QuadParams,std::allocator<Infinity::Renderer2D::QuadParams>>>>>' needs to have dll-interface to be used by clients of class 'Infinity::Renderer2D'
+C:\Dev\C++\Projects\Infinity\Infinity\include\renderer2d\Renderer2D.h(49): message : see declaration of 'std::map<const Infinity::Texture2D *,std::vector<Infinity::Renderer2D::QuadParams,std::allocator<Infinity::Renderer2D::QuadParams>>,std::less<const Infinity::Texture2D *>,std::allocator<std::pair<const Infinity::Texture2D *const ,std::vector<Infinity::Renderer2D::QuadParams,std::allocator<Infinity::Renderer2D::QuadParams>>>>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\VertexLayout.h(21,20): warning C4251: 'Infinity::VertexLayout::Element::name': class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of struct 'Infinity::VertexLayout::Element'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\include\xstring(4575): message : see declaration of 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(16,53): warning C4251: 'Infinity::Log::core_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+C:\Dev\C++\Projects\Infinity\Infinity\include\Log.h(17,55): warning C4251: 'Infinity::Log::client_logger': class 'std::shared_ptr<spdlog::logger>' needs to have dll-interface to be used by clients of class 'Infinity::Log'
+C:\Dev\C++\Projects\Infinity\Infinity\dependencies\spdlog\include\spdlog\details\registry.h(34): message : see declaration of 'std::shared_ptr<spdlog::logger>'
+  Camera.cpp
+  Generating Code...
+     Creating library lib\Release-windows-x86\Infinity.lib and object lib\Release-windows-x86\Infinity.exp
+  Infinity.vcxproj -> C:\Dev\C++\Projects\Infinity\Infinity\lib\Release-windows-x86\Infinity.dll

@@ -92,13 +92,15 @@ namespace Infinity
 	// UserCreateEvent
 
 #ifdef DEBUG
-	UserCreateEvent::UserCreateEvent(Context *context, void *caller):
+	UserCreateEvent::UserCreateEvent(Window *window, Context *context, void *caller):
 		Event(EventType::UserCreate, "UserCreateEvent", caller),
+		m_window(window),
 		m_context(context)
 	{}
 #else
-	UserCreateEvent::UserCreateEvent(Context *context, void *caller):
+	UserCreateEvent::UserCreateEvent(Window *window, Context *context, void *caller):
 		Event(EventType::UserCreate, caller),
+		m_window(window),
 		m_context(context)
 	{}
 #endif // DEBUG
@@ -106,6 +108,7 @@ namespace Infinity
 	UserCreateEvent::~UserCreateEvent()
 	{}
 
+	Window *UserCreateEvent::GetWindow() const { return m_window; }
 	Context *UserCreateEvent::GetContext() const { return m_context; }
 
 	// UserUpdateEvent

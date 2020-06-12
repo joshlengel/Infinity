@@ -178,14 +178,27 @@ namespace Infinity
 		m_context(),
 
 		m_keys(),
-		m_buttons()
+		m_buttons(),
+
+		m_cursor_enabled(true),
+		m_cursor_x(),
+		m_cursor_y(),
+		m_restore_cursor_x(),
+		m_restore_cursor_y(),
+		m_raw_input_size(0),
+		m_raw_input_data(nullptr)
 	{
 		memset(m_keys, 0, sizeof(m_keys));
 		memset(m_buttons, 0, sizeof(m_buttons));
 	}
 
 	WindowsWindow::~WindowsWindow()
-	{}
+	{
+		if (m_raw_input_data)
+		{
+			free(m_raw_input_data);
+		}
+	}
 
 	bool WindowsWindow::Init(const WindowParams &params)
 	{
@@ -495,8 +508,67 @@ namespace Infinity
 
 		return false;
 	}
+
 	bool WindowsWindow::MousePressed(MouseCode button) const { return MouseDown(button) && !m_buttons[(unsigned int)button]; }
 	bool WindowsWindow::MouseReleased(MouseCode button) const { return !MouseDown(button) && m_buttons[(unsigned int)button]; }
+
+	void WindowsWindow::EnableCursor()
+	{
+		RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, nullptr };
+
+		if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE)))
+		{
+			INFINITY_CORE_ERROR("Error enabling cursor");
+			return;
+		}
+
+		m_cursor_x = m_restore_cursor_x;
+		m_cursor_y = m_restore_cursor_y;
+
+		POINT point = { m_restore_cursor_x, m_restore_cursor_y };
+		ClientToScreen(m_window_handle, &point);
+
+		SetCursorPos(point.x, point.y);
+
+		ClipCursor(nullptr);
+
+		ShowCursor(true);
+
+		m_cursor_enabled = true;
+	}
+
+	void WindowsWindow::DisableCursor()
+	{
+		m_restore_cursor_x = m_cursor_x;
+		m_restore_cursor_y = m_cursor_y;
+
+		ShowCursor(false);
+
+		POINT point = { (LONG)(m_width / 2), (LONG)(m_height / 2) };
+		ClientToScreen(m_window_handle, &point);
+
+		SetCursorPos(point.x, point.y);
+		RECT client_rect;
+		GetClientRect(m_window_handle, &client_rect);
+		ClientToScreen(m_window_handle, (POINT*)&client_rect.left);
+		ClientToScreen(m_window_handle, (POINT*)&client_rect.right);
+		ClipCursor(&client_rect);
+
+		RAWINPUTDEVICE rid = { 0x01, 0x02, 0, m_window_handle };
+
+		if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE)))
+		{
+			INFINITY_CORE_ERROR("Error disabling cursor");
+			return;
+		}
+
+		m_cursor_enabled = false;
+	}
+
+	bool WindowsWindow::CursorEnabled() const { return m_cursor_enabled; }
+
+	int WindowsWindow::GetCursorPosX() const { return m_cursor_x; }
+	int WindowsWindow::GetCursorPosY() const { return m_cursor_y; }
 
 	bool WindowsWindow::Resize()
 	{
@@ -749,22 +821,26 @@ namespace Infinity
 
 		case WM_MOUSEMOVE:
 		{
-			int cx = GET_X_LPARAM(l_param);
-			int cy = GET_Y_LPARAM(l_param);
-
-			if (!window->m_cursor_active) // can only detect cursor entered events
+			if (window->m_cursor_enabled)
 			{
-				TRACKMOUSEEVENT tme = {};
-				tme.cbSize = sizeof(TRACKMOUSEEVENT);
-				tme.dwFlags = TME_LEAVE;
-				tme.hwndTrack = window_handle;
-				TrackMouseEvent(&tme);
+				window->m_cursor_x = GET_X_LPARAM(l_param);
+				window->m_cursor_y = GET_Y_LPARAM(l_param);
 
-				window->m_cursor_active = true;
-				Application::GetApplication()->PushEvent(new CursorEnteredEvent(window));
+				if (!window->m_cursor_active) // can only detect cursor entered events
+				{
+					TRACKMOUSEEVENT tme = {};
+					tme.cbSize = sizeof(TRACKMOUSEEVENT);
+					tme.dwFlags = TME_LEAVE;
+					tme.hwndTrack = window_handle;
+					TrackMouseEvent(&tme);
+
+					window->m_cursor_active = true;
+					Application::GetApplication()->PushEvent(new CursorEnteredEvent(window));
+				}
+
+				Application::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
 			}
 
-			Application::GetApplication()->PushEvent(new CursorMovedEvent(cx, cy, window));
 			return 0;
 		}
 		case WM_MOUSELEAVE:
@@ -781,6 +857,51 @@ namespace Infinity
 			Application::GetApplication()->PushEvent(new WindowClosedEvent(window));
 			return 0;
 
+		case WM_INPUT:
+		{
+			if (window->m_cursor_enabled) return 0;
+
+			unsigned int size;
+			HRAWINPUT hri = (HRAWINPUT)l_param;
+
+			GetRawInputData(hri, RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER));
+
+			if (size > window->m_raw_input_size)
+			{
+				window->m_raw_input_size = size;
+				void *data = realloc(window->m_raw_input_data, size);
+				
+				if (!data)
+				{
+					free(window->m_raw_input_data);
+					INFINITY_CORE_ERROR("Error reading virtual cursor position while cursor disabled");
+					return 0;
+				}
+
+				window->m_raw_input_data = data;
+			}
+			
+			if (GetRawInputData(hri, RID_INPUT, window->m_raw_input_data, &size, sizeof(RAWINPUTHEADER)) != size)
+			{
+				INFINITY_CORE_ERROR("Error reading virtual cursor position while cursor disabled");
+				return 0;
+			}
+
+			RAWINPUT *data = (RAWINPUT*)window->m_raw_input_data;
+
+			int cx = (int)data->data.mouse.lLastX;
+			int cy = (int)data->data.mouse.lLastY;
+
+			if (cx || cy)
+			{
+				window->m_cursor_x += cx;
+				window->m_cursor_y += cy;
+
+				Application::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
+			}
+
+			return 0;
+		}
 		default:
 			return DefWindowProcA(window_handle, msg, w_param, l_param);
 		}

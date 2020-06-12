@@ -10,6 +10,7 @@
 
 namespace Infinity
 {
+	class Window;
 	class Context;
 
 	class INFINITY_API Event
@@ -87,12 +88,14 @@ namespace Infinity
 	class INFINITY_API UserCreateEvent : public Event
 	{
 	private:
+		Window *m_window;
 		Context *m_context;
 
 	public:
-		UserCreateEvent(Context *context, void *caller);
+		UserCreateEvent(Window *window, Context *context, void *caller);
 		~UserCreateEvent();
 
+		Window *GetWindow() const;
 		Context *GetContext() const;
 	};
 

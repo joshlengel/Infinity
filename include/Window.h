@@ -49,6 +49,14 @@ namespace Infinity
 		virtual bool MousePressed(MouseCode button) const = 0;
 		virtual bool MouseReleased(MouseCode button) const = 0;
 
+		virtual void EnableCursor() = 0;
+		virtual void DisableCursor() = 0;
+
+		virtual bool CursorEnabled() const = 0;
+
+		virtual int GetCursorPosX() const = 0;
+		virtual int GetCursorPosY() const = 0;
+
 		static Window *CreateWindow();
 		static void *GetNativeContext();
 	};

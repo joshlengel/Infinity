@@ -64,6 +64,11 @@ namespace Infinity
 		bool m_keys[(unsigned int)KeyCode::Last];
 		bool m_buttons[(unsigned int)MouseCode::Last];
 
+		bool m_cursor_enabled;
+		int m_cursor_x, m_cursor_y, m_restore_cursor_x, m_restore_cursor_y;
+		unsigned int m_raw_input_size;
+		void *m_raw_input_data;
+
 	public:
 		WindowsWindow();
 		~WindowsWindow();
@@ -84,6 +89,14 @@ namespace Infinity
 		bool MouseDown(MouseCode button) const override;
 		bool MousePressed(MouseCode button) const override;
 		bool MouseReleased(MouseCode button) const override;
+
+		void EnableCursor() override;
+		void DisableCursor() override;
+
+		bool CursorEnabled() const override;
+
+		int GetCursorPosX() const override;
+		int GetCursorPosY() const override;
 
 		static void EventListener(Event *event);
 

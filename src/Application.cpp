@@ -77,7 +77,7 @@ namespace Infinity
 			INFINITY_CORE_TRACE("Context created successfully");
 		}
 
-		PushEvent(new UserCreateEvent(m_context, this));
+		PushEvent(new UserCreateEvent(m_window, m_context, this));
 
 		DispatchEvents();
 
@@ -91,9 +91,12 @@ namespace Infinity
 			double dt = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
 			t1 = t2;
 
+			PushEvent(new UserUpdateEvent(dt, this));
+
+			DispatchEvents();
+
 			Window::PollInput();
 
-			PushEvent(new UserUpdateEvent(dt, this));
 			PushEvent(new UserRenderEvent(m_context, this));
 
 			DispatchEvents();

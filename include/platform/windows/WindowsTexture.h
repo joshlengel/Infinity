@@ -24,14 +24,14 @@ namespace Infinity
 		WindowsTexture2D();
 		~WindowsTexture2D();
 
-		bool Init(const char *filename) override;
-		bool Init(unsigned int width, unsigned int height, const unsigned char *pixels) override;
+		bool Init(const char *filename, bool mipmap = false, float lod_bias = 0.0f) override;
+		bool Init(unsigned int width, unsigned int height, const unsigned char *pixels, bool mipmap = false, float lod_bias = 0.0f) override;
 		void Destroy() override;
 
 		void Bind(unsigned int slot) const override;
 
 	private:
-		bool InitDirect3D();
+		bool InitDirect3D(bool mipmap, float lod_bias);
 	};
 }
 

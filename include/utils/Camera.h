@@ -31,4 +31,37 @@ namespace Infinity
 
 		const Mat4f &GetProjectionViewMatrix() const override;
 	};
+
+	class INFINITY_API PerspectiveCamera : public Camera
+	{
+	private:
+		Mat4f m_view;
+
+		float m_cache_yaw, m_cache_sin_yaw, m_cache_cos_yaw;
+
+	public:
+		Vec3f position;
+		float roll, pitch, yaw;
+
+		float clip_near = 0.1f;
+		float clip_far = 100.0f;
+
+		float fov = 3.14159f * 0.25f;
+
+		PerspectiveCamera(const Vec3f &position = { 0.0f, 0.0f, 0.0f }, float roll = 0.0f, float pitch = 0.0f, float yaw = 0.0f);
+		~PerspectiveCamera();
+
+		void Update(float aspect_ratio);
+		const Mat4f &GetProjectionViewMatrix() const override;
+
+		void MoveForward(float speed);
+		void MoveBackward(float speed);
+		void MoveLeft(float speed);
+		void MoveRight(float speed);
+		void MoveUp(float speed);
+		void MoveDown(float speed);
+
+	private:
+		void UpdateCache();
+	};
 }

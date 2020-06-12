@@ -53,6 +53,7 @@ namespace Infinity
 		constexpr Vec2 operator-(const Vec2 &v) const { return Sub(v); }
 		constexpr Vec2 operator*(T scalar) const { return Scale(scalar); }
 		constexpr Vec2 operator*(const Mat2<T> &m) const { return Mul(m); }
+		constexpr Vec2 operator-() const { return { -x, -y }; }
 
 		Vec2 &operator+=(const Vec2 &v) { return operator=(Add(v)); }
 		Vec2 &operator-=(const Vec2 &v) { return operator=(Sub(v)); }
@@ -105,6 +106,7 @@ namespace Infinity
 		constexpr Vec3 operator-(const Vec3 &v) const { return Sub(v); }
 		constexpr Vec3 operator*(T scalar) const { return Scale(scalar); }
 		constexpr Vec3 operator*(const Mat3<T> &m) const { return Mul(m); }
+		constexpr Vec3 operator-() const { return { -x, -y, -z }; }
 
 		Vec3 &operator+=(const Vec3 &v) { return operator=(Add(v)); }
 		Vec3 &operator-=(const Vec3 &v) { return operator=(Sub(v)); }
@@ -157,6 +159,7 @@ namespace Infinity
 		constexpr Vec4 operator-(const Vec4 &v) const { return Sub(v); }
 		constexpr Vec4 operator*(T scalar) const { return Scale(scalar); }
 		constexpr Vec4 operator*(const Mat4<T> &m) const { return Mul(m); }
+		constexpr Vec4 operator-() const { return { -x, -y, -z, -w }; }
 
 		Vec4 &operator+=(const Vec4 &v) { return operator=(Add(v)); }
 		Vec4 &operator-=(const Vec4 &v) { return operator=(Sub(v)); }

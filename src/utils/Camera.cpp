@@ -31,4 +31,73 @@ namespace Infinity
 	}
 
 	const Mat4f &OrthoCamera::GetProjectionViewMatrix() const { return m_view; }
+
+	PerspectiveCamera::PerspectiveCamera(const Vec3f &position, float roll, float pitch, float yaw):
+		position(position),
+		roll(roll), pitch(pitch), yaw(yaw),
+		m_view(),
+		m_cache_yaw(),
+		m_cache_sin_yaw(),
+		m_cache_cos_yaw()
+	{}
+
+	PerspectiveCamera::~PerspectiveCamera()
+	{}
+
+	void PerspectiveCamera::Update(float aspect_ratio)
+	{
+		m_view = MakePerspectiveProjection(fov, aspect_ratio, clip_near, clip_far) * MakeRollPitchYawRotation(-pitch, -yaw, -roll) * MakeTranslation(-position);
+	}
+
+	const Mat4f &PerspectiveCamera::GetProjectionViewMatrix() const { return m_view; }
+
+	void PerspectiveCamera::UpdateCache()
+	{
+		if (m_cache_yaw != yaw)
+		{
+			m_cache_yaw = yaw;
+			m_cache_sin_yaw = sin(yaw);
+			m_cache_cos_yaw = cos(yaw);
+		}
+	}
+
+	void PerspectiveCamera::MoveForward(float speed)
+	{
+		UpdateCache();
+		position.x += speed * m_cache_sin_yaw;
+		position.z += speed * m_cache_cos_yaw;
+	}
+
+	void PerspectiveCamera::MoveBackward(float speed)
+	{
+		UpdateCache();
+		position.x -= speed * m_cache_sin_yaw;
+		position.z -= speed * m_cache_cos_yaw;
+	}
+
+	void PerspectiveCamera::MoveLeft(float speed)
+	{
+		UpdateCache();
+		position.x -= speed * m_cache_cos_yaw;
+		position.z += speed * m_cache_sin_yaw;
+	}
+
+	void PerspectiveCamera::MoveRight(float speed)
+	{
+		UpdateCache();
+		position.x += speed * m_cache_cos_yaw;
+		position.z -= speed * m_cache_sin_yaw;
+	}
+
+	void PerspectiveCamera::MoveUp(float speed)
+	{
+		UpdateCache();
+		position.y += speed;
+	}
+
+	void PerspectiveCamera::MoveDown(float speed)
+	{
+		UpdateCache();
+		position.y -= speed;
+	}
 }

@@ -29,7 +29,7 @@ namespace Infinity
 
 	WindowsTexture2D::~WindowsTexture2D() {}
 
-	bool WindowsTexture2D::Init(const char *filename)
+	bool WindowsTexture2D::Init(const char *filename, bool mipmap, float lod_bias)
 	{
 		int width, height, cif;
 
@@ -38,10 +38,10 @@ namespace Infinity
 		m_width = (unsigned)width;
 		m_height = (unsigned)height;
 
-		return InitDirect3D();
+		return InitDirect3D(mipmap, lod_bias);
 	}
 
-	bool WindowsTexture2D::Init(unsigned int width, unsigned int height, const unsigned char *pixels)
+	bool WindowsTexture2D::Init(unsigned int width, unsigned int height, const unsigned char *pixels, bool mipmap, float lod_bias)
 	{
 		m_width = width;
 		m_height = height;
@@ -50,7 +50,7 @@ namespace Infinity
 		m_pixels = (unsigned char*)malloc(size); // must use malloc to be consistent with stbimage
 		memcpy(m_pixels, pixels, size);
 
-		return InitDirect3D();
+		return InitDirect3D(mipmap, lod_bias);
 	}
 
 	void WindowsTexture2D::Destroy()
@@ -80,7 +80,7 @@ namespace Infinity
 		}
 	}
 
-	bool WindowsTexture2D::InitDirect3D()
+	bool WindowsTexture2D::InitDirect3D(bool mipmap, float load_bias)
 	{
 		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
 
@@ -90,7 +90,7 @@ namespace Infinity
 		D3D11_TEXTURE2D_DESC tex_desc;
 		tex_desc.Width = m_width;
 		tex_desc.Height = m_height;
-		tex_desc.MipLevels = 0;
+		tex_desc.MipLevels = mipmap? 0 : 1;
 		tex_desc.ArraySize = 1;
 		tex_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		tex_desc.SampleDesc.Count = 1;
@@ -98,7 +98,7 @@ namespace Infinity
 		tex_desc.Usage = D3D11_USAGE_DEFAULT;
 		tex_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 		tex_desc.CPUAccessFlags = 0;
-		tex_desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+		tex_desc.MiscFlags = mipmap? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 
 		if (FAILED(device->CreateTexture2D(&tex_desc, nullptr, &m_texture)))
 		{
@@ -109,7 +109,7 @@ namespace Infinity
 		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
 		srv_desc.Format = tex_desc.Format;
 		srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
-		srv_desc.Texture2D.MipLevels = (unsigned int)-1;
+		srv_desc.Texture2D.MipLevels = mipmap? (unsigned int)-1 : 0;
 
 		if (FAILED(device->CreateShaderResourceView(m_texture, &srv_desc, &m_shader_resource_view)))
 		{
@@ -130,7 +130,7 @@ namespace Infinity
 		sampler_desc.BorderColor[2] = 0.0f;
 		sampler_desc.BorderColor[3] = 0.0f;
 		sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		sampler_desc.MipLODBias = 0.0f;
+		sampler_desc.MipLODBias = mipmap? load_bias : 0.0f;
 		sampler_desc.MinLOD = -D3D11_FLOAT32_MAX;
 		sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 		sampler_desc.MaxAnisotropy = 1;

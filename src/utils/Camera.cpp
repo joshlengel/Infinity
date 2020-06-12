@@ -36,9 +36,9 @@ namespace Infinity
 		position(position),
 		roll(roll), pitch(pitch), yaw(yaw),
 		m_view(),
-		m_cache_yaw(),
-		m_cache_sin_yaw(),
-		m_cache_cos_yaw()
+		m_cache_yaw(yaw),
+		m_cache_sin_yaw(sin(yaw)),
+		m_cache_cos_yaw(cos(yaw))
 	{}
 
 	PerspectiveCamera::~PerspectiveCamera()

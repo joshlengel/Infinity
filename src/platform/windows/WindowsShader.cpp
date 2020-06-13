@@ -118,10 +118,12 @@ namespace Infinity
 
 		pixel_bc->Release();
 
-		D3D11_INPUT_ELEMENT_DESC *elements = new D3D11_INPUT_ELEMENT_DESC[m_vertex_layout.GetNumElements()];
+		unsigned int num_elements = m_vertex_layout.GetNumElements();
+		D3D11_INPUT_ELEMENT_DESC *elements = new D3D11_INPUT_ELEMENT_DESC[num_elements];
+
 		const VertexLayout::Element *itr = m_vertex_layout.begin();
 
-		for (unsigned int i = 0; i < m_vertex_layout.GetNumElements(); ++i)
+		for (unsigned int i = 0; i < num_elements; ++i)
 		{
 			D3D11_INPUT_ELEMENT_DESC &desc = elements[i];
 
@@ -235,7 +237,7 @@ namespace Infinity
 		return true;
 	}
 
-	int WindowsShader::GetConstantLocation(const std::string &name)
+	int WindowsShader::GetConstantLocation(const String &name)
 	{
 		for (const VertexLayout::Element &e : m_constant_layout)
 		{

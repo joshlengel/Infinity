@@ -1,8 +1,10 @@
 #include"VertexLayout.h"
 
+#include"utils/data/Memory.h"
+
 namespace Infinity
 {
-	VertexLayout::Element::Element(const std::string &name, DataType type):
+	VertexLayout::Element::Element(const String &name, DataType type):
 		offset(),
 		count(),
 		input_slot(),
@@ -10,7 +12,7 @@ namespace Infinity
 		type(type)
 	{}
 
-	VertexLayout::Element::Element(std::string &&name, DataType type):
+	VertexLayout::Element::Element(String &&name, DataType type):
 		offset(),
 		count(),
 		input_slot(),
@@ -18,7 +20,7 @@ namespace Infinity
 		type(type)
 	{}
 
-	VertexLayout::Element::Element(const std::string &name, DataType type, unsigned int input_slot):
+	VertexLayout::Element::Element(const String &name, DataType type, unsigned int input_slot):
 		offset(),
 		count(),
 		input_slot(input_slot),
@@ -26,7 +28,7 @@ namespace Infinity
 		type(type)
 	{}
 
-	VertexLayout::Element::Element(std::string &&name, DataType type, unsigned int input_slot):
+	VertexLayout::Element::Element(String &&name, DataType type, unsigned int input_slot):
 		offset(),
 		count(),
 		input_slot(input_slot),
@@ -35,17 +37,19 @@ namespace Infinity
 	{}
 
 	VertexLayout::VertexLayout(std::initializer_list<Element> list):
-		m_num_elements(list.size()),
+		m_num_elements((unsigned int)list.size()),
 		m_elements((Element*)malloc(m_num_elements * sizeof(Element))),
 		m_stride()
 	{
+		Set((char*)m_elements, (char)0, m_num_elements * sizeof(Element));
+
 		const Element *itr = list.begin();
 
 		unsigned int offset = 0;
 		for (unsigned int i = 0; i < m_num_elements; ++i)
 		{
 			Element &e = m_elements[i];
-			memcpy(&e.name, &itr->name, sizeof(std::string)); // must copy string this way
+			e.name = itr->name;
 			e.type = itr->type;
 			e.input_slot = itr->input_slot;
 			e.offset = offset;
@@ -64,7 +68,7 @@ namespace Infinity
 		m_elements((Element*)malloc(layout.m_num_elements * sizeof(Element))),
 		m_stride(layout.m_stride)
 	{
-		memcpy(m_elements, layout.m_elements, m_num_elements * sizeof(Element));
+		Copy((const char*)layout.m_elements, (char*)m_elements, m_num_elements * sizeof(Element));
 	}
 
 	VertexLayout::VertexLayout(VertexLayout &&layout) noexcept:
@@ -90,7 +94,7 @@ namespace Infinity
 		m_elements = (Element*)malloc(size);
 		m_stride = layout.m_stride;
 		
-		memcpy(m_elements, layout.m_elements, size);
+		Copy((const char*)layout.m_elements, (char*)m_elements, size);
 
 		return *this;
 	}

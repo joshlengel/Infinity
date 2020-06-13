@@ -10,17 +10,16 @@
 #include"Log.h"
 #include"event/Event.h"
 
+#include"utils/data/Map.h"
+
 #include<dxgi.h>
 #include<d3d11.h>
 
 #include<windowsx.h>
 
-#include<memory>
-#include<map>
-
 constexpr static const char CLASS_NAME[] = "Infinity WindowsWindow Class";
 
-static const std::map<unsigned int, Infinity::KeyCode> VK_TO_KEY_CODE =
+static const Infinity::Map<unsigned int, Infinity::KeyCode> VK_TO_KEY_CODE =
 {
 	{ VK_BACK,       Infinity::KeyCode::Backspace     },
 	{ VK_TAB,        Infinity::KeyCode::Tab           },
@@ -127,7 +126,7 @@ static const std::map<unsigned int, Infinity::KeyCode> VK_TO_KEY_CODE =
 	{ VK_F24, Infinity::KeyCode::F24                   }
 };
 
-static const std::map<unsigned int, Infinity::MouseCode> VK_TO_MOUSE_CODE =
+static const Infinity::Map<unsigned int, Infinity::MouseCode> VK_TO_MOUSE_CODE =
 {
 	{ VK_LBUTTON, Infinity::MouseCode::Left },
 	{ VK_RBUTTON, Infinity::MouseCode::Right },
@@ -490,7 +489,7 @@ namespace Infinity
 	{
 		for (auto entry : VK_TO_KEY_CODE)
 		{
-			if (entry.second == key) return GetAsyncKeyState(entry.first) & 0x8000;
+			if (entry.value == key) return GetAsyncKeyState(entry.key) & 0x8000; // entry.key has nothing to do with KeyCode key
 		}
 
 		return false;
@@ -503,7 +502,7 @@ namespace Infinity
 	{
 		for (auto entry : VK_TO_MOUSE_CODE)
 		{
-			if (entry.second == button) return GetAsyncKeyState(entry.first) & 0x8000;
+			if (entry.value == button) return GetAsyncKeyState(entry.key) & 0x8000;
 		}
 
 		return false;
@@ -742,24 +741,38 @@ namespace Infinity
 		// Keys
 		case WM_KEYDOWN:
 		{
-			auto key = VK_TO_KEY_CODE.find((unsigned int)w_param);
+			unsigned int key = (unsigned int)w_param;
 
-			if (key != VK_TO_KEY_CODE.end() && !window->m_keys[(unsigned int)key->second])
+			auto res = VK_TO_KEY_CODE.find(key);
+
+			if (res == VK_TO_KEY_CODE.end()) return 0;
+
+			KeyCode mapped = res->value;
+			unsigned int mapped_ui = (unsigned int)mapped;
+
+			if (!window->m_keys[mapped_ui])
 			{
-				window->m_keys[(unsigned int)key->second] = true;
-				Application::GetApplication()->PushEvent(new KeyPressedEvent(key->second, window));
+				window->m_keys[mapped_ui] = true;
+				Application::GetApplication()->PushEvent(new KeyPressedEvent(mapped, window));
 			}
 
 			return 0;
 		}
 		case WM_KEYUP:
 		{
-			auto res = VK_TO_KEY_CODE.find((unsigned int)w_param);
+			unsigned int key = (unsigned int)w_param;
 
-			if (res != VK_TO_KEY_CODE.end() && window->m_keys[(unsigned int)res->second])
+			auto res = VK_TO_KEY_CODE.find(key);
+
+			if (res == VK_TO_KEY_CODE.end()) return 0;
+
+			KeyCode mapped = res->value;
+			unsigned int mapped_ui = (unsigned int)mapped;
+
+			if (window->m_keys[mapped_ui])
 			{
-				window->m_keys[(unsigned int)res->second] = false;
-				Application::GetApplication()->PushEvent(new KeyReleasedEvent(res->second, window));
+				window->m_keys[mapped_ui] = false;
+				Application::GetApplication()->PushEvent(new KeyReleasedEvent(mapped, window));
 			}
 
 			return 0;

@@ -5,8 +5,8 @@
 #include"utils\Camera.h"
 #include"utils\math\Math.h"
 
-#include<vector>
-#include<map>
+#include"utils/data/ArrayList.h"
+#include"utils/data/Map.h"
 
 namespace Infinity
 {
@@ -46,7 +46,7 @@ namespace Infinity
 		Texture2D *m_def_texture;
 		const Camera *m_camera;
 
-		std::map<const Texture2D*, std::vector<QuadParams>> m_batches;
+		Map<const Texture2D*, ArrayList<QuadParams>> m_batches;
 
 	public:
 		Renderer2D();

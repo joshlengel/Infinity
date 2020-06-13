@@ -246,22 +246,20 @@ namespace Infinity
 
 	void Renderer2D::BatchAdd(const QuadParams &quad)
 	{
-		auto itr = m_batches.find(quad.texture);
-
-		if (itr != m_batches.end())
+		if (m_batches.ContainsKey(quad.texture))
 		{
-			itr->second.push_back(quad);
+			m_batches[quad.texture].Add(quad);
 		}
 		else
 		{
-			std::vector<QuadParams> batch = { quad };
+			ArrayList<QuadParams> batch = { quad };
 			m_batches[quad.texture] = std::move(batch);
 		}
 	}
 
 	void Renderer2D::BatchClear()
 	{
-		m_batches.clear();
+		m_batches.Clear();
 	}
 
 	void Renderer2D::BatchRender()
@@ -286,10 +284,10 @@ namespace Infinity
 
 		for (auto &batch : m_batches)
 		{
-			if (batch.first) batch.first->Bind(0);
+			if (batch.key) batch.key->Bind(0);
 			else m_def_texture->Bind(0);
 
-			for (auto &quad : batch.second)
+			for (auto &quad : batch.value)
 			{
 				if (!m_shader->MapConstants())
 				{

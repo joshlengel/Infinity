@@ -5,7 +5,7 @@
 #include"InputCodes.h"
 
 #ifdef DEBUG
-	#include<string>
+#include"utils/data/String.h"
 #endif // DEBUG
 
 namespace Infinity
@@ -29,17 +29,17 @@ namespace Infinity
 		bool m_consumed;
 
 #ifdef DEBUG
-		std::string m_debug_name;
+		String m_debug_name;
 #endif // DEBUG
 
 		void *m_caller;
 
 	public:
 #ifdef DEBUG
-		Event(EventType type, const std::string &debug_name, void *caller);
-		Event(EventType type, std::string &&debug_name, void *caller);
+		Event(EventType type, const String &debug_name, void *caller);
+		Event(EventType type, String &&debug_name, void *caller);
 
-		const std::string &GetDebugName() const;
+		const String &GetDebugName() const;
 #else
 		Event(EventType type, void *caller);
 #endif // DEBUG

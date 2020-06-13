@@ -4,6 +4,8 @@
 
 #include"VertexLayout.h"
 
+#include"utils/data/String.h"
+
 namespace Infinity
 {
 	class INFINITY_API Shader
@@ -23,7 +25,7 @@ namespace Infinity
 		virtual bool DeclareConstants(const VertexLayout &layout) = 0;
 		virtual bool DeclareConstants(VertexLayout &&layout) = 0;
 
-		virtual int GetConstantLocation(const std::string &name) = 0;
+		virtual int GetConstantLocation(const String &name) = 0;
 		
 		virtual bool MapConstants() = 0;
 		virtual void UnmapConstants() = 0;

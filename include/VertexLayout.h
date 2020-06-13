@@ -4,7 +4,7 @@
 
 #include"Type.h"
 
-#include<string>
+#include"utils/data/String.h"
 
 namespace Infinity
 {
@@ -18,14 +18,14 @@ namespace Infinity
 
 			unsigned int input_slot;
 
-			std::string name;
+			String name;
 			DataType type;
 
-			Element(const std::string &name, DataType type);
-			Element(std::string &&name, DataType type);
+			Element(const String &name, DataType type);
+			Element(String &&name, DataType type);
 
-			Element(const std::string &name, DataType type, unsigned int input_slot);
-			Element(std::string &&name, DataType type, unsigned int input_slot);
+			Element(const String &name, DataType type, unsigned int input_slot);
+			Element(String &&name, DataType type, unsigned int input_slot);
 		};
 
 	private:

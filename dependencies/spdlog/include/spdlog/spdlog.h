@@ -9,6 +9,12 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable : 26495) // Custom edit by Josh lengel
+#pragma warning(disable : 26812) // Custom edit by Josh lengel
+#pragma warning(disable : 26451) // Custom edit by Josh lengel
+#pragma warning(disable : 6385) // Custom edit by Josh lengel
+
 #include <spdlog/common.h>
 #include <spdlog/details/registry.h>
 #include <spdlog/logger.h>
@@ -336,5 +342,7 @@ inline void critical(wstring_view_t fmt, const Args &... args)
 #ifdef SPDLOG_HEADER_ONLY
 #include "spdlog-inl.h"
 #endif
+
+#pragma warning(pop)
 
 #endif // SPDLOG_H

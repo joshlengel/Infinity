@@ -5,7 +5,7 @@
 #include"event/EventQueue.h"
 #include"event/InputCodes.h"
 
-#include<vector>
+#include"utils/data/ArrayList.h"
 
 namespace Infinity
 {
@@ -28,6 +28,8 @@ namespace Infinity
 	class CursorExitedEvent;
 	class CursorMovedEvent;
 
+	INFINITY_TEMPLATE template class INFINITY_API ArrayList<void(*)(Event*)>;
+
 	class INFINITY_API Application
 	{
 	private:
@@ -35,7 +37,7 @@ namespace Infinity
 		Context *m_context;
 		EventQueue m_queue;
 
-		std::vector<void(*)(Event*)> m_event_listeners;
+		ArrayList<void(*)(Event*)> m_event_listeners;
 
 		static Application *application;
 

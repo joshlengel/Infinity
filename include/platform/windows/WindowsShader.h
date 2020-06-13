@@ -33,7 +33,7 @@ namespace Infinity
 		bool DeclareConstants(const VertexLayout &layout) override;
 		bool DeclareConstants(VertexLayout &&layout) override;
 
-		int GetConstantLocation(const std::string &name) override;
+		int GetConstantLocation(const String &name) override;
 		
 		bool MapConstants() override;
 		void UnmapConstants() override;

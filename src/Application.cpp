@@ -28,7 +28,7 @@ namespace Infinity
 		Event *event;
 		while (event = m_queue.PopEvent())
 		{
-			for (unsigned int i = 0; i < m_event_listeners.size(); ++i)
+			for (unsigned int i = 0; i < m_event_listeners.GetSize(); ++i)
 			{
 				m_event_listeners[i](event);
 
@@ -120,7 +120,7 @@ namespace Infinity
 
 	void Application::AddEventListener(void(*listener)(Event*))
 	{
-		m_event_listeners.push_back(listener);
+		m_event_listeners.Add(listener);
 	}
 
 	void Application::PushEvent(Event *event) { m_queue.PushEvent(event); }

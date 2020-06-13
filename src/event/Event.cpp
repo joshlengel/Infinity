@@ -5,21 +5,21 @@ namespace Infinity
 	// Event
 
 #ifdef DEBUG
-	Event::Event(Event::EventType type, const std::string &debug_name, void *caller):
+	Event::Event(Event::EventType type, const String &debug_name, void *caller):
 		m_type(type),
 		m_consumed(false),
 		m_debug_name(debug_name),
 		m_caller(caller)
 	{}
 
-	Event::Event(Event::EventType type, std::string &&debug_name, void *caller):
+	Event::Event(Event::EventType type, String &&debug_name, void *caller):
 		m_type(type),
 		m_consumed(false),
 		m_debug_name(std::move(debug_name)),
 		m_caller(caller)
 	{}
 
-	const std::string &Event::GetDebugName() const { return m_debug_name; }
+	const String &Event::GetDebugName() const { return m_debug_name; }
 #else
 	Event::Event(Event::EventType type, void *caller):
 		m_type(type),

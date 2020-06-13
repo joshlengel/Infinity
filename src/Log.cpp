@@ -4,13 +4,19 @@
 
 namespace Infinity
 {
-	std::shared_ptr<spdlog::logger> Log::core_logger;
-	std::shared_ptr<spdlog::logger> Log::client_logger;
+	std::shared_ptr<spdlog::logger> Log::sp_core_logger;
+	std::shared_ptr<spdlog::logger> Log::sp_client_logger;
+
+	Pointer<spdlog::logger> Log::core_logger;
+	Pointer<spdlog::logger> Log::client_logger;
 
 	void Log::Init()
 	{
-		core_logger = spdlog::stdout_color_mt("Infinity");
-		client_logger = spdlog::stdout_color_mt("Client");
+		sp_core_logger = spdlog::stdout_color_mt("Infinity");
+		sp_client_logger = spdlog::stdout_color_mt("Client");
+
+		core_logger = &sp_core_logger;
+		client_logger = &sp_client_logger;
 
 		core_logger->set_level(spdlog::level::trace);
 		client_logger->set_level(spdlog::level::trace);
@@ -19,12 +25,12 @@ namespace Infinity
 		client_logger->set_pattern("%^[%T] %n: %v%$");
 	}
 
-	std::shared_ptr<spdlog::logger> Log::GetCoreLogger()
+	Pointer<spdlog::logger> Log::GetCoreLogger()
 	{
 		return core_logger;
 	}
 
-	std::shared_ptr<spdlog::logger> Log::GetClientLogger()
+	Pointer<spdlog::logger> Log::GetClientLogger()
 	{
 		return client_logger;
 	}

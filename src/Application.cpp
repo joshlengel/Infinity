@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Application.h"
 
 #include"Window.h"
@@ -5,8 +7,6 @@
 #include"Log.h"
 
 #include"event/Event.h"
-
-#include<chrono>
 
 namespace Infinity
 {

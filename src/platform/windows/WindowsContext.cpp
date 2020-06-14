@@ -1,11 +1,10 @@
+#include"InfinityPCH.h"
+
 #ifdef INFINITY_WINDOWS
 
 #include"platform/windows/WindowsContext.h"
 
 #include"platform/windows/WindowsWindow.h"
-#include"Log.h"
-
-#include<d3d11.h>
 
 namespace Infinity
 {

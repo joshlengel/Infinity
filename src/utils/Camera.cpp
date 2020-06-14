@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"utils/Camera.h"
 
 namespace Infinity

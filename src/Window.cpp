@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Window.h"
 
 namespace Infinity

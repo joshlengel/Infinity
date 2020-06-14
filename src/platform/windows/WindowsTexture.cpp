@@ -1,12 +1,9 @@
+#include"InfinityPCH.h"
+
 #ifdef INFINITY_WINDOWS
 
 #include"platform/windows/WindowsTexture.h"
 #include"platform/windows/WindowsWindow.h"
-
-#include"Log.h"
-
-#include<d3d11.h>
-#include<dxgi.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include<stb_image.h>

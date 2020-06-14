@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Model.h"
 
 namespace Infinity

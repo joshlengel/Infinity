@@ -1,15 +1,13 @@
+#include"InfinityPCH.h"
+
 #ifdef INFINITY_WINDOWS
 
 #include"platform/windows/WindowsShader.h"
 
 #include"Application.h"
 #include"event/Event.h"
-#include"Log.h"
 
 #include"platform/windows/WindowsWindow.h"
-
-#include<d3d11.h>
-#include<d3dcompiler.h>
 
 namespace Infinity
 {

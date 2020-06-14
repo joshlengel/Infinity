@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"event/EventQueue.h"
 
 namespace Infinity

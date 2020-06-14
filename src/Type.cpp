@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Type.h"
 
 constexpr static const unsigned int BYTE_NUMS[] =

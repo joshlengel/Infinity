@@ -1,0 +1,6 @@
+[submodule "dependencies/spdlog"]
+	path = dependencies/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "dependencies/stbimage"]
+	path = dependencies/stbimage
+	url = https://github.com/nothings/stb

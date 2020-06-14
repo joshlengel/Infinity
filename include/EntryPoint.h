@@ -4,7 +4,9 @@
 
 int main(int argc, char **argv)
 {
+#ifdef DEBUG
 	Infinity::Log::Init();
+#endif // DEBUG
 
 	Infinity::Application *app = Infinity::CreateApplication();
 

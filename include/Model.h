@@ -4,8 +4,6 @@
 
 #include"VertexLayout.h"
 
-#include<string>
-
 namespace Infinity
 {
 	class INFINITY_API VertexBuffer

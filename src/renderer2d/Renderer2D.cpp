@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"renderer2d/Renderer2D.h"
 
 #include"Model.h"
@@ -5,8 +7,6 @@
 #include"Type.h"
 
 #include"Texture.h"
-
-#include"Log.h"
 
 constexpr static const char v_shader_source[] = R"(
 cbuffer Constants

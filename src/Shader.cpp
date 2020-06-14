@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Shader.h"
 
 namespace Infinity

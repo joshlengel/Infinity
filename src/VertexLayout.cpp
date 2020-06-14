@@ -1,6 +1,6 @@
-#include"VertexLayout.h"
+#include"InfinityPCH.h"
 
-#include"utils/data/Memory.h"
+#include"VertexLayout.h"
 
 namespace Infinity
 {

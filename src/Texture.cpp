@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Texture.h"
 
 namespace Infinity

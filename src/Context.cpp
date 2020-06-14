@@ -1,3 +1,5 @@
+#include"InfinityPCH.h"
+
 #include"Context.h"
 
 namespace Infinity

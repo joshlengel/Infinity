@@ -1,21 +1,13 @@
+#include"InfinityPCH.h"
+
 #ifdef INFINITY_WINDOWS
 
 #include"platform/windows/WindowsWindow.h"
 
 #include"platform/windows/WindowsContext.h"
 
-#undef CreateWindow
-
 #include"Application.h"
-#include"Log.h"
 #include"event/Event.h"
-
-#include"utils/data/Map.h"
-
-#include<dxgi.h>
-#include<d3d11.h>
-
-#include<windowsx.h>
 
 constexpr static const char CLASS_NAME[] = "Infinity WindowsWindow Class";
 
@@ -211,8 +203,8 @@ namespace Infinity
 		WNDCLASSA wc = {};
 		wc.hInstance = m_instance;
 		wc.style = CS_OWNDC;
-		wc.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
-		wc.hCursor = LoadCursorA(nullptr, IDC_ARROW);
+		wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		
 		wc.lpszClassName = CLASS_NAME;
 		wc.lpszMenuName = nullptr;

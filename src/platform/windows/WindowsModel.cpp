@@ -1,10 +1,10 @@
+#include"InfinityPCH.h"
+
 #ifdef INFINITY_WINDOWS
 
 #include"platform/windows/WindowsModel.h"
 
 #include"platform/windows/WindowsWindow.h"
-
-#include<d3d11.h>
 
 constexpr DXGI_FORMAT GetFormat(unsigned int bytes)
 {

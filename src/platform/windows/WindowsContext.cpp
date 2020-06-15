@@ -6,6 +6,8 @@
 
 #include"platform/windows/WindowsWindow.h"
 
+#include"Rasterizer.h"
+
 namespace Infinity
 {
 	Context *Context::CreateContext()
@@ -16,6 +18,7 @@ namespace Infinity
 	WindowsContext::WindowsContext():
 		m_device_context(nullptr),
 		m_render_target_view(nullptr),
+		m_depth_stencil_view(nullptr),
 		m_clear_color{ 0.0f, 0.0f, 0.0f, 1.0f }
 	{}
 
@@ -34,14 +37,32 @@ namespace Infinity
 
 		m_device_context = context->device_context;
 		m_render_target_view = context->render_target_view;
+		m_depth_stencil_view = context->depth_stencil_view;
 		context->context = this;
 		context->render_target_view = nullptr;
+		context->depth_stencil_view = nullptr;
+
+		m_def_rasterizer = Infinity::Rasterizer::CreateRasterizer();
+
+		if (!m_def_rasterizer->Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing default rasterizer");
+			return false;
+		}
+
+		m_def_rasterizer->Bind();
 
 		return true;
 	}
 
 	void WindowsContext::Destroy()
 	{
+		if (m_def_rasterizer)
+		{
+			m_def_rasterizer->Destroy();
+			m_def_rasterizer = nullptr;
+		}
+
 		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)(Window::GetNativeContext());
 
 		if (context && context->context == this)
@@ -51,13 +72,15 @@ namespace Infinity
 
 		m_device_context = nullptr;
 		m_render_target_view = nullptr;
+		m_depth_stencil_view = nullptr;
 	}
 
-	bool WindowsContext::Resize(ID3D11RenderTargetView *render_target_view, unsigned int width, unsigned int height)
+	bool WindowsContext::Resize(ID3D11RenderTargetView *render_target_view, ID3D11DepthStencilView *depth_stencil_view, unsigned int width, unsigned int height)
 	{
 		m_render_target_view = render_target_view;
+		m_depth_stencil_view = depth_stencil_view;
 
-		m_device_context->OMSetRenderTargets(1, &m_render_target_view, nullptr);
+		m_device_context->OMSetRenderTargets(1, &m_render_target_view, m_depth_stencil_view);
 
 		D3D11_VIEWPORT viewport = {};
 		viewport.TopLeftX = 0.0f;
@@ -92,6 +115,15 @@ namespace Infinity
 			else
 			{
 				INFINITY_CORE_ERROR("Error clearing context: Render target view is null.");
+			}
+
+			if (m_depth_stencil_view)
+			{
+				m_device_context->ClearDepthStencilView(m_depth_stencil_view, D3D11_CLEAR_DEPTH, 1.0f, 0x00);
+			}
+			else
+			{
+				INFINITY_CORE_ERROR("Error clearing context: Depth stencil view is null.");
 			}
 		}
 		else

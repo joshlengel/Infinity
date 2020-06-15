@@ -4,6 +4,10 @@
 
 namespace Infinity
 {
-	Context::Context() {}
-	Context::~Context() {}
+	Context::Context():
+		m_def_rasterizer(nullptr)
+	{}
+
+	Context::~Context()
+	{}
 }

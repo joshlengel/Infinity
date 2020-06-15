@@ -10,6 +10,9 @@
 #include"Shader.h"
 #include"Type.h"
 #include"Texture.h"
+#include"VertexLayout.h"
+
+#include"Rasterizer.h"
 
 #include"Log.h"
 

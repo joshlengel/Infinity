@@ -164,7 +164,9 @@ namespace Infinity
 		m_device(nullptr),
 		m_device_context(nullptr),
 		m_render_target_view(nullptr),
-		m_rasterizer_state(nullptr),
+		m_depth_stencil_buffer(nullptr),
+		m_depth_stencil_view(nullptr),
+		m_depth_stencil_state(nullptr),
 
 		m_context(),
 
@@ -366,26 +368,34 @@ namespace Infinity
 		if (FAILED(device_adapter->GetParent(__uuidof(IDXGIFactory), (void**)&device_factory))) return false;
 
 		if (FAILED(device_factory->CreateSwapChain(m_device, &sc_desc, &m_swap_chain))) return false;
+
+		D3D11_DEPTH_STENCIL_DESC ds_desc = {};
+		ds_desc.DepthEnable = true;
+		ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		ds_desc.DepthFunc = D3D11_COMPARISON_LESS;
+
+		ds_desc.StencilEnable = true;
+		ds_desc.StencilReadMask = 0xff;
+		ds_desc.StencilWriteMask = 0xff;
+
+		ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+		ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+		ds_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		ds_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+
+		ds_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+		ds_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+		ds_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		ds_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+
+		if (FAILED(m_device->CreateDepthStencilState(&ds_desc, &m_depth_stencil_state)))
+		{
+			INFINITY_CORE_ERROR("Error creating depth stencil state");
+			return false;
+		}
+
+		m_device_context->OMSetDepthStencilState(m_depth_stencil_state, 1);
 		
-		D3D11_RASTERIZER_DESC raster_desc = {};
-		raster_desc.AntialiasedLineEnable = true;
-
-		raster_desc.CullMode = D3D11_CULL_BACK;
-		raster_desc.FillMode = D3D11_FILL_SOLID;
-		raster_desc.FrontCounterClockwise = false;
-
-		raster_desc.DepthClipEnable = true;
-		raster_desc.DepthBias = 0;
-		raster_desc.DepthBiasClamp = 0.0f;
-
-		raster_desc.MultisampleEnable = false;
-		raster_desc.ScissorEnable = false;
-		raster_desc.SlopeScaledDepthBias = 0.0f;
-
-		if (FAILED(m_device->CreateRasterizerState(&raster_desc, &m_rasterizer_state))) return false;
-
-		m_device_context->RSSetState(m_rasterizer_state);
-
 		// get IDXGIFactory
 
 		device_factory->MakeWindowAssociation(m_window_handle, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
@@ -401,7 +411,7 @@ namespace Infinity
 
 		Application::GetApplication()->PushEvent(new WindowResizedEvent(a_width, a_height, this));
 
-		m_context = { this, nullptr, m_device, m_device_context, m_render_target_view };
+		m_context = { this, nullptr, m_device, m_device_context, m_render_target_view, m_depth_stencil_view };
 
 		return true;
 	}
@@ -410,16 +420,28 @@ namespace Infinity
 	{
 		if (Window::native_context == &m_context) Window::native_context = nullptr;
 
-		if (m_rasterizer_state)
-		{
-			m_rasterizer_state->Release();
-			m_rasterizer_state = nullptr;
-		}
-
 		if (m_render_target_view)
 		{
 			m_render_target_view->Release();
 			m_render_target_view = nullptr;
+		}
+
+		if (m_depth_stencil_buffer)
+		{
+			m_depth_stencil_buffer->Release();
+			m_depth_stencil_buffer = nullptr;
+		}
+
+		if (m_depth_stencil_state)
+		{
+			m_depth_stencil_state->Release();
+			m_depth_stencil_state = nullptr;
+		}
+
+		if (m_depth_stencil_view)
+		{
+			m_depth_stencil_view->Release();
+			m_depth_stencil_view = nullptr;
 		}
 
 		if (m_swap_chain)
@@ -574,6 +596,18 @@ namespace Infinity
 				m_render_target_view = nullptr;
 			}
 
+			if (m_depth_stencil_buffer)
+			{
+				m_depth_stencil_buffer->Release();
+				m_depth_stencil_buffer = nullptr;
+			}
+
+			if (m_depth_stencil_view)
+			{
+				m_depth_stencil_view->Release();
+				m_depth_stencil_view = nullptr;
+			}
+
 			m_device_context->OMSetRenderTargets(1, &m_render_target_view, nullptr);
 			
 			if (FAILED(m_swap_chain->ResizeBuffers(0, m_width, m_height, DXGI_FORMAT_UNKNOWN, 0)))
@@ -605,12 +639,34 @@ namespace Infinity
 				Application::GetApplication()->RequestExit();
 				return false;
 			}
-			
+
 			back_buffer->Release();
 
+			D3D11_TEXTURE2D_DESC dsb_desc = back_buffer_desc;
+			dsb_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			dsb_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+			if (FAILED(m_device->CreateTexture2D(&dsb_desc, nullptr, &m_depth_stencil_buffer)))
+			{
+				INFINITY_CORE_ERROR("Error creating depth stencil buffer after resizing context");
+				Application::GetApplication()->RequestExit();
+				return false;
+			}
+
+			D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc = {};
+			dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+			dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+			if (FAILED(m_device->CreateDepthStencilView(m_depth_stencil_buffer, &dsv_desc, &m_depth_stencil_view)))
+			{
+				INFINITY_CORE_ERROR("Error creating depth stencil view after resizing context");
+				Application::GetApplication()->RequestExit();
+				return false;
+			}
+			
 			if (m_context.context)
 			{
-				if (!m_context.context->Resize(m_render_target_view, m_width, m_height))
+				if (!m_context.context->Resize(m_render_target_view, m_depth_stencil_view, m_width, m_height))
 				{
 					INFINITY_CORE_ERROR("Error resizing context");
 					Application::GetApplication()->RequestExit();

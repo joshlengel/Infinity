@@ -8,9 +8,6 @@
 #pragma comment(lib, "d3d11.lib")
 
 #define WIN32_LEAN_AND_MEAN
-#undef UNICODE
-#undef _UNICODE
-
 #include<Windows.h>
 #undef CreateWindow
 
@@ -22,7 +19,9 @@ struct IDXGISwapChain;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct ID3D11RenderTargetView;
-struct ID3D11RasterizerState;
+struct ID3D11DepthStencilView;
+struct ID3D11DepthStencilState;
+struct ID3D11Texture2D;
 
 namespace Infinity
 {
@@ -39,6 +38,7 @@ namespace Infinity
 			ID3D11Device *device;
 			ID3D11DeviceContext *device_context;
 			ID3D11RenderTargetView *render_target_view;
+			ID3D11DepthStencilView *depth_stencil_view;
 		};
 
 	private:
@@ -57,7 +57,9 @@ namespace Infinity
 		ID3D11Device *m_device;
 		ID3D11DeviceContext *m_device_context;
 		ID3D11RenderTargetView *m_render_target_view;
-		ID3D11RasterizerState *m_rasterizer_state;
+		ID3D11DepthStencilView *m_depth_stencil_view;
+		ID3D11DepthStencilState *m_depth_stencil_state;
+		ID3D11Texture2D *m_depth_stencil_buffer;
 
 		WindowsWindowContext m_context;
 

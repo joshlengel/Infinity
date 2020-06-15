@@ -4,10 +4,13 @@
 
 namespace Infinity
 {
-	class Window;
+	class Rasterizer;
 
 	class INFINITY_API Context
 	{
+	protected:
+		Rasterizer *m_def_rasterizer;
+
 	public:
 		Context();
 		virtual ~Context();

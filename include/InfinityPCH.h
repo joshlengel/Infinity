@@ -13,6 +13,9 @@
 
 #include<memory>
 #include<chrono>
+#include<fstream>
+#include<string>
+#include<string_view>
 
 #ifdef INFINITY_WINDOWS
 	#define WIN32_LEAN_AND_MEAN

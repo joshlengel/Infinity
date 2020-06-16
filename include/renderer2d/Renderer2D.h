@@ -21,13 +21,13 @@ namespace Infinity
 	public:
 		struct QuadParams
 		{
-			Vec2f position;
-			Vec2f size;
+			Vec2f position = { 0.0f, 0.0f };
+			Vec2f size = { 1.0f, 1.0f };
 			float rotation = 0.0f;
 			bool centered = true;
 			Vec4f color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-			const Texture2D *texture;
+			const Texture2D *texture = nullptr;
 		};
 
 	private:

@@ -48,9 +48,19 @@ namespace Infinity
 			return false;
 		}
 
-		const Entry *find(const Key &key) const
+		const Entry *Find(const Key &key) const
 		{
 			for (const Entry &e : m_entries)
+			{
+				if (e.key == key) return &e;
+			}
+
+			return end();
+		}
+
+		Entry *Find(const Key &key)
+		{
+			for (Entry &e : m_entries)
 			{
 				if (e.key == key) return &e;
 			}
@@ -65,8 +75,7 @@ namespace Infinity
 				if (e.key == key) return e.value;
 			}
 
-			Entry n;
-			n.key = key;
+			Entry n { key };
 
 			m_entries.Add(n);
 

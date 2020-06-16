@@ -791,7 +791,7 @@ namespace Infinity
 		{
 			unsigned int key = (unsigned int)w_param;
 
-			auto res = VK_TO_KEY_CODE.find(key);
+			auto res = VK_TO_KEY_CODE.Find(key);
 
 			if (res == VK_TO_KEY_CODE.end()) return 0;
 
@@ -810,7 +810,7 @@ namespace Infinity
 		{
 			unsigned int key = (unsigned int)w_param;
 
-			auto res = VK_TO_KEY_CODE.find(key);
+			auto res = VK_TO_KEY_CODE.Find(key);
 
 			if (res == VK_TO_KEY_CODE.end()) return 0;
 

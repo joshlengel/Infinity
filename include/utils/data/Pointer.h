@@ -10,28 +10,107 @@ namespace Infinity
 	class INFINITY_API Pointer
 	{
 	private:
-		std::shared_ptr<T> *m_p;
+		struct Control
+		{
+			T val;
+			unsigned int ref_count;
+		};
+
+		Control *m_control;
+
+		Pointer(Control *control):
+			m_control(control)
+		{}
 
 	public:
-		Pointer(std::shared_ptr<T> *p):
-			m_p(p)
-		{}
+		inline static unsigned int ref_count = 0;
 
-		Pointer():
-			m_p(nullptr)
-		{}
+		template <typename ...Args>
+		static Pointer Make(const Args &...args)
+		{
+			Control *control = new Control{ T(args...), 1 };
+
+			++ref_count;
+
+			return Pointer(control);
+		}
 
 		Pointer(const Pointer &p):
-			m_p(p.m_p)
+			m_control(p.m_control)
+		{
+			if (m_control)
+				++m_control->ref_count;
+		}
+
+		Pointer(Pointer &&p):
+			m_control(p.m_control)
+		{
+			p.m_control = nullptr;
+		}
+
+		Pointer():
+			m_control(nullptr)
 		{}
+
+		~Pointer()
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (m_control->ref_count == 0)
+				{
+					--ref_count;
+					delete m_control;
+				}
+			}
+		}
 
 		Pointer &operator=(const Pointer &p)
 		{
-			m_p = p.m_p;
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (m_control->ref_count == 0)
+				{
+					--ref_count;
+					delete m_control;
+				}
+			}
+
+			m_control = p.m_control;
+			
+			if (m_control)
+				++m_control->ref_count;
+			
 			return *this;
 		}
 
-		T *operator->() const { return m_p->operator->(); }
-		T &operator*() const { return m_p->operator*(); }
+		Pointer &operator=(Pointer &&p)
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (m_control->ref_count == 0)
+				{
+					--ref_count;
+					delete m_control;
+				}
+			}
+
+			m_control = p.m_control;
+			p.m_control = nullptr;
+			return *this;
+		}
+
+		T *operator->() const { return &m_control->val; }
+		T &operator*() const { return m_control->val; }
+
+		operator bool()
+		{
+			return m_control;
+		}
 	};
 }

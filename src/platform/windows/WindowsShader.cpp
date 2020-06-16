@@ -191,11 +191,23 @@ namespace Infinity
 			m_constant_buffer = nullptr;
 		}
 
+		unsigned int bytes = 0;
+
+		for (auto &elem : m_constant_layout)
+		{
+			switch (elem.type)
+			{
+			case DataType::MAT3: bytes += 12 * 4; break;
+			case DataType::MAT4: bytes += 16 * 4; break;
+			default: bytes += 4 * 4; break;
+			}
+		}
+
 		D3D11_BUFFER_DESC buffer_desc = {};
 		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
 		buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		buffer_desc.ByteWidth = m_constant_layout.GetStride();
+		buffer_desc.ByteWidth = bytes;
 
 		if (FAILED(device->CreateBuffer(&buffer_desc, nullptr, &m_constant_buffer)))
 		{
@@ -220,11 +232,23 @@ namespace Infinity
 			m_constant_buffer = nullptr;
 		}
 
+		unsigned int bytes = 0;
+
+		for (auto &elem : m_constant_layout)
+		{
+			switch (elem.type)
+			{
+			case DataType::MAT3: bytes += 12 * 4; break;
+			case DataType::MAT4: bytes += 16 * 4; break;
+			default: bytes += 4 * 4; break;
+			}
+		}
+
 		D3D11_BUFFER_DESC buffer_desc = {};
 		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
 		buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		buffer_desc.ByteWidth = m_constant_layout.GetStride();
+		buffer_desc.ByteWidth = bytes;
 
 		if (FAILED(device->CreateBuffer(&buffer_desc, nullptr, &m_constant_buffer)))
 		{
@@ -237,9 +261,18 @@ namespace Infinity
 
 	int WindowsShader::GetConstantLocation(const String &name)
 	{
-		for (const VertexLayout::Element &e : m_constant_layout)
+		unsigned int bytes = 0;
+
+		for (auto &elem : m_constant_layout)
 		{
-			if (e.name == name) return e.offset;
+			if (elem.name == name) return (signed)bytes;
+
+			switch (elem.type)
+			{
+			case DataType::MAT3: bytes += 12 * 4; break;
+			case DataType::MAT4: bytes += 16 * 4; break;
+			default: bytes += 4 * 4; break;
+			}
 		}
 
 		return -1;

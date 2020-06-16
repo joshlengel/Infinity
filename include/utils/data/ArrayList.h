@@ -232,6 +232,15 @@ namespace Infinity
 			m_prev_capacity = STACK_DATA_LENGTH;
 		}
 
+		bool Contains(const T &elem) const
+		{
+			for (const T &t : *this)
+				if (t == elem)
+					return true;
+
+			return false;
+		}
+
 		unsigned int GetSize() const { return m_size; }
 		unsigned int GetCapacity() const { return m_capacity; }
 

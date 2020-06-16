@@ -22,6 +22,8 @@
 
 #include"utils\math\Math.h"
 #include"utils\Camera.h"
+#include"utils\ModelLoader.h"
+#include"utils\profiling\Timer.h"
 
 #include"renderer2d\Renderer2D.h"
 

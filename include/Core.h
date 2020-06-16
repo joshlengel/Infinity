@@ -28,6 +28,10 @@
 	#define INFINITY_CLIENT_WARN(msg, ...)  Infinity::Log::GetClientLogger()->warn(msg, __VA_ARGS__)
 	#define INFINITY_CLIENT_ERROR(msg, ...) Infinity::Log::GetClientLogger()->error(msg, __VA_ARGS__)
 	#define INFINITY_CLIENT_FATAL(msg, ...) Infinity::Log::GetClientLogger()->critical(msg, __VA_ARGS__)
+
+	#define INFINITY_PROFILE_NAME2(name, line) name##line
+	#define INFINITY_PROFILE_NAME1(name, line) INFINITY_PROFILE_NAME2(name, line)
+	#define INFINITY_PROFILE_SCOPE(name) Infinity::Timer INFINITY_PROFILE_NAME1(timer, __LINE__) (name)
 #else
 	#ifdef INFINITY_BUILD_DLL
 		#define INFINITY_CORE_TRACE(msg, ...)
@@ -42,4 +46,6 @@
 	#define INFINITY_CLIENT_WARN(msg, ...)
 	#define INFINITY_CLIENT_ERROR(msg, ...)
 	#define INFINITY_CLIENT_FATAL(msg, ...)
+
+	#define INFINITY_PROFILE_SCOPE(name)
 #endif // DEBUG

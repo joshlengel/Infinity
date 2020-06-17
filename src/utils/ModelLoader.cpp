@@ -39,23 +39,26 @@ bool StartsWith(const char *str, const char *prefix)
 	}
 }
 
-const char *AdvanceWhitespace(const char *str, unsigned int &len)
+struct SplitResult
 {
-	len = 0;
+	const char *token;
+	unsigned int length;
+};
 
-	while (*str && *str != ' ') { ++str; ++len; }
-	while (*str && *str == ' ') ++str;
-
-	return str;
-}
-
-const char *Locate(const char *str, char c, unsigned int &len)
+SplitResult Split(const char *&str, char delimiter)
 {
-	len = 0;
+	const char *start = str;
 
-	while (*str && *str != c) { ++str; ++len; }
+	while (*start == delimiter) ++start;
 
-	return str;
+	const char *end = start;
+	unsigned int length = 0;
+
+	while (*end && *end != delimiter) { ++end; ++length; }
+
+	str = end;
+
+	return { start, length };
 }
 
 namespace Infinity
@@ -110,7 +113,7 @@ namespace Infinity
 
 			Vertex(): Vertex({}, 0) {};
 			Vertex(const Vec3f &position, unsigned int index): position(position), tex_index(0), norm_index(0), index(index) {}
-
+			
 			bool operator==(const Vertex &v) const { return position == v.position && tex_index == v.tex_index && norm_index == v.norm_index; }
 		};
 
@@ -123,177 +126,73 @@ namespace Infinity
 
 		std::string line;
 
-		{
-			INFINITY_PROFILE_SCOPE("LOAD OBJ VERTICES");
 		while (std::getline(file, line))
 		{
-			unsigned int len;
-
-			const char *l = *line.c_str() == ' '? AdvanceWhitespace(line.c_str(), len) : line.c_str();
+			const char *l = line.c_str();
 
 			if (StartsWith(l, "v "))
 			{
-				float v[3];
+				const char *start = l + 2; // skip v and space characters
 
-				const char *num = l;
-				const char *num_end = AdvanceWhitespace(l, len);
+				auto[v1, v1_length] = Split(start, ' ');
+				auto[v2, v2_length] = Split(start, ' ');
+				auto[v3, v3_length] = Split(start, ' ');
 
-				for (unsigned int i = 0; i < 3; ++i)
-				{
-					num = num_end;
-					num_end = AdvanceWhitespace(num, len); // len has length of num
-
-					if (len >= 20)
-					{
-						INFINITY_CORE_WARN("OBJ loading only supports numbers with less than {0} digits. Numbers will be truncated", 20);
-					}
-					else
-					{
-						char buff[20];
-						memset(buff, 0, sizeof(buff));
-						memcpy(buff, num, min(len * sizeof(char), sizeof(buff)));
-
-						v[i] = strtof(num, nullptr);
-					}
-				}
-
-				v_comb.Add(new Vertex(v, v_comb.GetSize()));
+				v_comb.Add(new Vertex({ strtof(v1, nullptr), strtof(v2, nullptr), strtof(v3, nullptr) }, v_comb.GetSize()));
 			}
 			else if (StartsWith(l, "vt "))
 			{
-				float v[2];
+				const char *start = l + 3; // skip vt and space characters
 
-				const char *num = l;
-				const char *num_end = AdvanceWhitespace(l, len);
+				auto[tc1, tc1_length] = Split(start, ' ');
+				auto[tc2, tc2_length] = Split(start, ' ');
 
-				for (unsigned int i = 0; i < 2; ++i)
-				{
-					num = num_end;
-					num_end = AdvanceWhitespace(num, len); // len has length of num
-
-					if (len >= 20)
-					{
-						INFINITY_CORE_WARN("OBJ loading only supports numbers with less than {0} digits. Numbers will be truncated", 20);
-					}
-					else
-					{
-						char buff[20];
-						memset(buff, 0, sizeof(buff));
-						memcpy(buff, num, min(len * sizeof(char), sizeof(buff)));
-
-						v[i] = strtof(num, nullptr);
-					}
-				}
-
-				tex_coords.Add(v);
+				tex_coords.Add({ strtof(tc1, nullptr), strtof(tc2, nullptr) });
 
 				use_tex_coords = true;
 			}
 			else if (StartsWith(l, "vn "))
 			{
-				float v[3];
+				const char *start = l + 3; // skip vn and space characters
 
-				const char *num = l;
-				const char *num_end = AdvanceWhitespace(l, len);
+				auto[n1, n1_length] = Split(start, ' ');
+				auto[n2, n2_length] = Split(start, ' ');
+				auto[n3, n3_length] = Split(start, ' ');
 
-				for (unsigned int i = 0; i < 3; ++i)
-				{
-					num = num_end;
-					num_end = AdvanceWhitespace(num, len); // len has length of num
-
-					if (len >= 20)
-					{
-						INFINITY_CORE_WARN("OBJ loading only supports numbers with less than {0} digits. Numbers will be truncated", 20);
-					}
-					else
-					{
-						char buff[20];
-						memset(buff, 0, sizeof(buff));
-						memcpy(buff, num, min(len * sizeof(char), sizeof(buff)));
-
-						v[i] = strtof(num, nullptr);
-					}
-				}
-
-				normals.Add(v);
+				normals.Add({ strtof(n1, nullptr), strtof(n2, nullptr), strtof(n3, nullptr) });
 
 				use_normals = true;
 			}
 			else if (StartsWith(l, "f ")) break;
 		}
-		}
 
 		ArrayList<unsigned int> indices;
 
-		{
-			INFINITY_PROFILE_SCOPE("GENERATE OBJ INDICES");
 		do
 		{
-			unsigned int len;
-
-			const char *l = *line.c_str() == ' '? AdvanceWhitespace(line.c_str(), len) : line.c_str();
+			const char *l = line.c_str();
 
 			if (StartsWith(l, "f "))
 			{
-				const char *group = l;
-				const char *group_end = AdvanceWhitespace(l, len);
+				const char *start = l + 2;
 
 				for (unsigned int i = 0; i < 3; ++i)
 				{
-					group = group_end;
-					group_end = AdvanceWhitespace(group, len);
+					auto[group, group_length] = Split(start, ' ');
 
-					unsigned int pos_i, tex_i, norm_i;
+					auto[position, position_length] = Split(group, '/');
+					auto[tex_coord, tex_coord_length] = Split(group, '/');
+					auto[normal, normal_length] = Split(group, '/');
+
+					unsigned int pos_i = (unsigned)atoi(position) - 1;
+					unsigned int tc_i = use_tex_coords? (unsigned)atoi(tex_coord) - 1 : 0;
+					unsigned int norm_i = use_normals? (unsigned)atoi(normal) - 1 : 0;
 					
-					unsigned int temp;
-
-					const char *num = group;
-					const char *num_end = Locate(num, '/', temp);
-
-					if (num_end > group_end) num_end = group + len;
-						
-					char buff[7];
-					memset(buff, 0, sizeof(buff));
-					memcpy(buff, num, min(num_end - num, sizeof(buff)));
-
-					++num_end;
-
-					pos_i = (unsigned)atoi(buff) - 1;
 					Vertex *v = v_comb[pos_i];
-
-					if (use_tex_coords)
-					{
-						num = num_end;
-						num_end = Locate(num, '/', temp);
-
-						if (num_end > group_end) num_end = group + len;
-							
-						memset(buff, 0, sizeof(buff));
-						memcpy(buff, num, min(num_end - num, sizeof(buff)));
-
-						++num_end;
-
-						tex_i = (unsigned)atoi(buff) - 1;
-					}
-
-					if (use_normals)
-					{
-						num = num_end;
-						num_end = Locate(num, '/', temp);
-
-						if (num_end > group_end) num_end = group + len;
-							
-						memset(buff, 0, sizeof(buff));
-						memcpy(buff, num, min(num_end - num, sizeof(buff)));
-
-						++num_end;
-
-						norm_i = (unsigned)atoi(buff) - 1;
-					}
 
 					if (v->set)
 					{
-						if (v->tex_index == tex_i && v->norm_index == norm_i)
+						if (v->tex_index == tc_i && v->norm_index == norm_i)
 						{
 							indices.Add(v->index);
 						}
@@ -304,7 +203,7 @@ namespace Infinity
 
 							while (next->similar)
 							{
-								if (next->similar->set && next->similar->tex_index == tex_i && next->similar->norm_index == norm_i) // check if vertex already exists
+								if (next->similar->set && next->similar->tex_index == tc_i && next->similar->norm_index == norm_i) // check if vertex already exists
 								{
 									indices.Add(next->similar->index);
 									goto no_duplicate;
@@ -316,21 +215,20 @@ namespace Infinity
 							// no duplicate exists, create new
 							next->similar = new Vertex(next->position, v_comb.GetSize());
 							next->similar->set = true;
-							next->similar->tex_index = tex_i;
+							next->similar->tex_index = tc_i;
 							next->similar->norm_index = norm_i;
 
 							indices.Add(next->similar->index);
 
 							v_comb.Add(next->similar);
 
-						no_duplicate:
-							;
+						no_duplicate:;
 						}
 					}
 					else
 					{
 						v->set = true;
-						v->tex_index = tex_i;
+						v->tex_index = tc_i;
 						v->norm_index = norm_i;
 
 						indices.Add(v->index);
@@ -339,10 +237,7 @@ namespace Infinity
 			}
 		}
 		while (std::getline(file, line));
-		}
 
-		{
-		INFINITY_PROFILE_SCOPE("LOAD OBJ VERTEX DATA");
 		const VertexLayout &layout = vertex_buffer->GetLayout();
 
 		unsigned int arr_size = layout.GetStride() * v_comb.GetSize(); 
@@ -375,10 +270,7 @@ namespace Infinity
 				arr[arr_i++] = norm.y;
 				arr[arr_i++] = norm.z;
 			}
-		}
 
-		for (Vertex *v : v_comb)
-		{
 			delete v;
 		}
 
@@ -399,7 +291,6 @@ namespace Infinity
 		}
 
 		delete[] arr_indices;
-		}
 	}
 
 	void ModelLoader::Load(const char *filename, Model *model, VertexBuffer *vertex_buffer, IndexBuffer *index_buffer)

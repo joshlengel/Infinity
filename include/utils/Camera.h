@@ -37,8 +37,9 @@ namespace Infinity
 	private:
 		Mat4f m_view;
 
+		float m_cache_pitch, m_cache_sin_pitch, m_cache_cos_pitch;
 		float m_cache_yaw, m_cache_sin_yaw, m_cache_cos_yaw;
-
+		
 	public:
 		Vec3f position;
 		float roll, pitch, yaw;
@@ -60,6 +61,11 @@ namespace Infinity
 		void MoveRight(float speed);
 		void MoveUp(float speed);
 		void MoveDown(float speed);
+
+		void MoveForwardXZ(float speed);
+		void MoveBackwardXZ(float speed);
+		void MoveUpXZ(float speed);
+		void MoveDownXZ(float speed);
 
 	private:
 		void UpdateCache();

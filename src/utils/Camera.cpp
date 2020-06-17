@@ -38,6 +38,9 @@ namespace Infinity
 		position(position),
 		roll(roll), pitch(pitch), yaw(yaw),
 		m_view(),
+		m_cache_pitch(pitch),
+		m_cache_sin_pitch(sin(pitch)),
+		m_cache_cos_pitch(cos(pitch)),
 		m_cache_yaw(yaw),
 		m_cache_sin_yaw(sin(yaw)),
 		m_cache_cos_yaw(cos(yaw))
@@ -55,6 +58,13 @@ namespace Infinity
 
 	void PerspectiveCamera::UpdateCache()
 	{
+		if (m_cache_pitch != pitch)
+		{
+			m_cache_pitch = pitch;
+			m_cache_sin_pitch = sin(pitch);
+			m_cache_cos_pitch = cos(pitch);
+		}
+
 		if (m_cache_yaw != yaw)
 		{
 			m_cache_yaw = yaw;
@@ -66,11 +76,43 @@ namespace Infinity
 	void PerspectiveCamera::MoveForward(float speed)
 	{
 		UpdateCache();
+		position.x += speed * m_cache_sin_yaw * m_cache_cos_pitch;
+		position.y += speed * m_cache_sin_pitch;
+		position.z += speed * m_cache_cos_yaw * m_cache_cos_pitch;
+	}
+
+	void PerspectiveCamera::MoveBackward(float speed)
+	{
+		UpdateCache();
+		position.x -= speed * m_cache_sin_yaw * m_cache_cos_pitch;
+		position.y -= speed * m_cache_sin_pitch;
+		position.z -= speed * m_cache_cos_yaw * m_cache_cos_pitch;
+	}
+
+	void PerspectiveCamera::MoveUp(float speed)
+	{
+		UpdateCache();
+		position.x -= speed * m_cache_sin_pitch * m_cache_sin_yaw;
+		position.y += speed * m_cache_cos_pitch;
+		position.z -= speed * m_cache_sin_pitch * m_cache_cos_yaw;
+	}
+
+	void PerspectiveCamera::MoveDown(float speed)
+	{
+		UpdateCache();
+		position.x += speed * m_cache_sin_pitch * m_cache_sin_yaw;
+		position.y -= speed * m_cache_cos_pitch;
+		position.z += speed * m_cache_sin_pitch * m_cache_cos_yaw;
+	}
+
+	void PerspectiveCamera::MoveForwardXZ(float speed)
+	{
+		UpdateCache();
 		position.x += speed * m_cache_sin_yaw;
 		position.z += speed * m_cache_cos_yaw;
 	}
 
-	void PerspectiveCamera::MoveBackward(float speed)
+	void PerspectiveCamera::MoveBackwardXZ(float speed)
 	{
 		UpdateCache();
 		position.x -= speed * m_cache_sin_yaw;
@@ -91,13 +133,13 @@ namespace Infinity
 		position.z -= speed * m_cache_sin_yaw;
 	}
 
-	void PerspectiveCamera::MoveUp(float speed)
+	void PerspectiveCamera::MoveUpXZ(float speed)
 	{
 		UpdateCache();
 		position.y += speed;
 	}
 
-	void PerspectiveCamera::MoveDown(float speed)
+	void PerspectiveCamera::MoveDownXZ(float speed)
 	{
 		UpdateCache();
 		position.y -= speed;

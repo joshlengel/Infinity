@@ -23,41 +23,73 @@ namespace Infinity
 		{
 			Vec2f position = { 0.0f, 0.0f };
 			Vec2f size = { 1.0f, 1.0f };
-			float rotation = 0.0f;
-			bool centered = true;
 			Vec4f color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+			float rotation = 0.0f;
+
+			bool batched = false;
 
 			const Texture2D *texture = nullptr;
 		};
 
 	private:
-		VertexBuffer *m_v_buff;
-		IndexBuffer *m_i_buff;
-		Model *m_model;
-		Shader *m_shader;
+		struct Vertex
+		{
+			Vec2f position;
+			Vec4f color;
+			Vec2f tex_coords;
+		};
 
-		int m_projection_view_location;
-		int m_model_location;
+	private:
 
-		int m_color_location;
+		struct RenderModel
+		{
+			VertexBuffer *v_buff;
+			IndexBuffer *i_buff;
+			Model *model;
+			Shader *shader;
+
+			~RenderModel();
+			void Destroy();
+		};
+
+		RenderModel m_batched, m_unbatched;
+
+		int m_batched_projection_view_location;
+		int m_unbatched_projection_view_location;
+		int m_unbatched_model_location;
+		int m_unbatched_color_location;
 
 		bool m_error;
 
 		Texture2D *m_def_texture;
-		const Camera *m_camera;
 
-		Map<const Texture2D*, ArrayList<QuadParams>> m_batches;
+		const static unsigned int MAX_QUADS = 300;
+		const static unsigned int MAX_VERTICES = MAX_QUADS * 4;
+		const static unsigned int MAX_INDICES = MAX_QUADS * 6;
+
+		struct Batch
+		{
+			Vertex vertices[MAX_VERTICES] = {};
+			Vertex *v_ptr = vertices;
+
+			unsigned int index_count = 0;
+		};
+
+		Map<const Texture2D*, Batch*> m_batches;
 
 	public:
 		Renderer2D();
 		~Renderer2D();
 
-		void RenderSingle(const QuadParams &quad);
+		bool Init();
+		void Destroy();
 
-		void BatchAdd(const QuadParams &quad);
-		void BatchClear();
-		void BatchRender();
+		void StartScene(const Camera *camera);
+		void DrawQuad(const QuadParams &quad);
+		void EndScene();
 
-		void SetCamera(const Camera *camera);
+	private:
+		void Flush(const Texture2D *texture, Batch *batch);
 	};
 }

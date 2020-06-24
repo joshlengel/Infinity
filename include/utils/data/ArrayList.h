@@ -2,8 +2,6 @@
 
 #include"Core.h"
 
-#include"Memory.h"
-
 #include<initializer_list>
 
 namespace Infinity
@@ -19,7 +17,7 @@ namespace Infinity
 		T m_stack_data[STACK_DATA_LENGTH];
 
 	public:
-		ArrayList(unsigned int capacity = STACK_DATA_LENGTH):
+		explicit ArrayList(unsigned int capacity = STACK_DATA_LENGTH):
 			m_size(0),
 			m_capacity(capacity),
 			m_prev_capacity(capacity),
@@ -49,7 +47,7 @@ namespace Infinity
 				m_prev_capacity = size;
 
 				m_data = new T[m_size];
-				Copy(elems, m_data, m_size);
+				Copy(m_data, elems, m_size);
 			}
 			else
 			{
@@ -57,7 +55,7 @@ namespace Infinity
 				m_prev_capacity = STACK_DATA_LENGTH;
 
 				m_data = m_stack_data;
-				Copy(elems, m_stack_data, m_size);
+				Copy(m_stack_data, elems, m_size);
 			}
 		}
 
@@ -74,10 +72,12 @@ namespace Infinity
 			}
 			else
 			{
+				m_capacity = STACK_DATA_LENGTH;
+				m_prev_capacity = STACK_DATA_LENGTH;
 				m_data = m_stack_data;
 			}
 
-			Copy(list.begin(), m_data, m_size);
+			Copy(m_data, list.begin(), m_size);
 		}
 
 		ArrayList(const ArrayList &list):
@@ -96,7 +96,7 @@ namespace Infinity
 				m_data = m_stack_data;
 			}
 
-			Copy(list.m_data, m_data, m_size);
+			Copy(m_data, list.m_data, m_size);
 		}
 
 		ArrayList(ArrayList &&list) noexcept:
@@ -113,7 +113,7 @@ namespace Infinity
 
 			if (m_capacity <= STACK_DATA_LENGTH)
 			{
-				Copy(m_data, m_stack_data, m_size);
+				Move(m_stack_data, m_data, m_size);
 				m_data = m_stack_data;
 			}
 		}
@@ -128,7 +128,7 @@ namespace Infinity
 			if (list.m_size <= m_size)
 			{
 				m_size = list.m_size;
-				Copy(list.m_data, m_data, list.m_size);
+				Copy(m_data, list.m_data, list.m_size);
 
 				ShrinkCapacity();
 			}
@@ -150,7 +150,7 @@ namespace Infinity
 					m_data = m_stack_data;
 				}
 
-				Copy(list.m_data, m_data, m_size);	
+				Copy(m_data, list.m_data, m_size);	
 			}
 
 			return *this;
@@ -165,7 +165,7 @@ namespace Infinity
 
 			if (list.m_capacity <= STACK_DATA_LENGTH)
 			{
-				Copy(m_data, m_stack_data, list.m_size);
+				Move(m_stack_data, m_data, list.m_size);
 				m_data = m_stack_data;
 			}
 
@@ -195,7 +195,7 @@ namespace Infinity
 		{
 			EnsureCapacity(num);
 
-			Copy(elems, m_data, num, m_size, 0);
+			Copy(m_data, elems, num);
 		}
 
 		void Add(const ArrayList &list)
@@ -205,9 +205,15 @@ namespace Infinity
 
 		void Remove(unsigned int i)
 		{
-			Copy(m_data, m_data, m_size - i - 1, i + 1, i); // In-place copy. This only works under very specific circumstances.
+			T *itr1 = m_data + i;
+			T *itr2 = itr1 + 1;
 
 			--m_size;
+
+			for (unsigned int j = 0; j < m_size - i; ++j)
+			{
+				*itr1++ = std::move(*itr2++);
+			}
 
 			ShrinkCapacity();
 		}
@@ -265,7 +271,7 @@ namespace Infinity
 				if (m_capacity > STACK_DATA_LENGTH)
 				{
 					T *temp = new T[m_capacity];
-					Copy(m_data, temp, m_prev_capacity);
+					Move(temp, m_data, m_prev_capacity);
 
 					if (m_prev_capacity > STACK_DATA_LENGTH)
 						delete[] m_data;
@@ -283,7 +289,7 @@ namespace Infinity
 				{
 					if (m_prev_capacity > STACK_DATA_LENGTH)
 					{
-						Copy(m_data, m_stack_data, m_size);
+						Move(m_stack_data, m_data, m_size);
 
 						delete[] m_data;
 
@@ -293,7 +299,7 @@ namespace Infinity
 				else
 				{
 					T *temp = new T[m_prev_capacity];
-					Copy(m_data, temp, m_size);
+					Move(temp, m_data, m_size);
 
 					delete[] m_data;
 
@@ -302,6 +308,28 @@ namespace Infinity
 
 				m_capacity = m_prev_capacity;
 				m_prev_capacity = m_size / 2;
+			}
+		}
+
+		static void Copy(T *dest, const T *src, unsigned int elems)
+		{
+			const T *itr1 = src;
+			T *itr2 = dest;
+
+			for (unsigned int i = 0; i < elems; ++i)
+			{
+				*itr2++ = *itr1++;
+			}
+		}
+
+		static void Move(T *dest, T *src, unsigned int elems)
+		{
+			T *itr1 = src;
+			T *itr2 = dest;
+
+			for (unsigned int i = 0; i < elems; ++i)
+			{
+				*itr2++ = std::move(*itr1++);
 			}
 		}
 	};

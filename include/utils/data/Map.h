@@ -87,6 +87,22 @@ namespace Infinity
 			m_entries.Clear();
 		}
 
+		void Remove(const Key &key)
+		{
+			auto itr = begin();
+
+			for (unsigned int index = 0; index < m_entries.GetSize(); ++index)
+			{
+				if (key == itr->key)
+				{
+					m_entries.Remove(index);
+					return;
+				}
+
+				++itr;
+			}
+		}
+
 		const Entry *begin() const { return m_entries.begin(); }
 		const Entry *end() const { return m_entries.end(); }
 		Entry *begin() { return m_entries.begin(); }

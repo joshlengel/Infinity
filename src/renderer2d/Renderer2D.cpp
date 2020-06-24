@@ -8,151 +8,172 @@
 
 #include"Texture.h"
 
-constexpr static const char v_shader_source[] = R"(
-cbuffer Constants
-{
-	matrix model;
-	matrix projection_view;
-	
-	float4 color;
-};
-
-struct VertexOut
-{
-	float4 position : SV_POSITION;
-	float2 texcoord : TEXCOORD0;
-	float4 color : COLOR0;
-};
-
-VertexOut main(float2 vertex : ATTRIBUTE0)
-{
-	VertexOut output;
-	
-	output.position = mul(float4(vertex, 0.0, 1.0), model);
-	output.position = mul(output.position, projection_view);
-	output.texcoord.x = (vertex.x + 1) * 0.5;
-	output.texcoord.y = (1 - vertex.y) * 0.5;
-	output.color = color;
-
-	return output;
-}
-)";
-
-constexpr static const char p_shader_source[] = R"(
-Texture2D tex;
-SamplerState samp;
-
-struct PixelIn
-{
-	float4 position : SV_POSITION;
-	float2 texcoords : TEXCOORD0;
-	float4 color : COLOR0;
-};
-
-float4 main(PixelIn input) : SV_TARGET
-{
-	return tex.Sample(samp, input.texcoords) * input.color;
-}
-)";
+#include"Renderer2DShaderSource.cpp" // contains the source for shaders
 
 namespace Infinity
 {
-	Renderer2D::Renderer2D():
-		m_v_buff(nullptr),
-		m_i_buff(nullptr),
-		m_model(nullptr),
-		m_shader(nullptr),
+	Renderer2D::RenderModel::~RenderModel()
+	{
+		delete v_buff;
+		delete i_buff;
+		delete model;
+		delete shader;
+	}
 
-		m_model_location(),
-		m_projection_view_location(),
+	void Renderer2D::RenderModel::Destroy()
+	{
+		if (v_buff) v_buff->Destroy();
+		if (i_buff) i_buff->Destroy();
+		if (shader) shader->Destroy();
+	}
+
+	Renderer2D::Renderer2D():
+		m_batched(),
+		m_unbatched(),
 		
-		m_color_location(),
+		m_batched_projection_view_location(),
+		m_unbatched_projection_view_location(),
+		m_unbatched_model_location(),
+		m_unbatched_color_location(),
 
 		m_error(false),
 
 		m_def_texture(nullptr),
-		m_camera(nullptr),
 
 		m_batches()
+	{}
+
+	Renderer2D::~Renderer2D()
 	{
-		m_v_buff = VertexBuffer::CreateVertexBuffer({
-			{ "vertex", DataType::FLOAT2 }
+		for (auto &entry : m_batches)
+		{
+			delete entry.value;
+		}
+
+		delete m_def_texture;
+	}
+
+	bool Renderer2D::Init()
+	{
+		m_batched.v_buff = VertexBuffer::CreateVertexBuffer({
+			{ "position",   DataType::FLOAT2 },
+			{ "color",      DataType::FLOAT4 },
+			{ "tex_coords", DataType::FLOAT2 }
 		});
 
-		if (!m_v_buff->Init())
+		m_unbatched.v_buff = VertexBuffer::CreateVertexBuffer({
+			{ "vertex",     DataType::FLOAT2 },
+			{ "tex_coords", DataType::FLOAT2 }
+		});
+
+		if (!m_batched.v_buff->Init(true) || !m_unbatched.v_buff->Init(false))
 		{
 			INFINITY_CORE_ERROR("Error initializing Renderer2D quad model");
 			m_error = true;
-			return;
+			return false;
 		}
 
-		float vertices[] =
+		float unbatched_vertices[] =
 		{
-			-1.0f, -1.0f,
-			 1.0f, -1.0f,
-			-1.0f,  1.0f,
-			 1.0f,  1.0f
+			-1.0f, -1.0f,   0.0f, 1.0f,
+			 1.0f, -1.0f,   1.0f, 1.0f,
+			-1.0f,  1.0f,   0.0f, 0.0f,
+			 1.0f,  1.0f,   1.0f, 0.0f
 		};
 
-		if (!m_v_buff->SetData(vertices, sizeof(vertices)))
+		if (!m_batched.v_buff->SetData(nullptr, MAX_VERTICES * sizeof(Vertex)) || !m_unbatched.v_buff->SetData(unbatched_vertices, sizeof(unbatched_vertices)))
 		{
 			INFINITY_CORE_ERROR("Error setting Renderer2D quad model data");
 			m_error = true;
-			return;
+			return false;
 		}
 
-		m_i_buff = IndexBuffer::CreateIndexBuffer();
+		m_batched.i_buff = IndexBuffer::CreateIndexBuffer();
+		m_unbatched.i_buff = IndexBuffer::CreateIndexBuffer();
 
-		if (!m_i_buff->Init())
+		if (!m_batched.i_buff->Init(true) || !m_unbatched.i_buff->Init(false))
 		{
-			INFINITY_CORE_ERROR("Error initializing Renderer2D quad model");
+			INFINITY_CORE_ERROR("Error initializing Renderer2D indices");
 			m_error = true;
-			return;
+			return false;
 		}
 
-		unsigned int indices[] =
+		unsigned int *batched_indices = new unsigned int[MAX_INDICES];
+
+		unsigned int index = 0;
+		for (unsigned int i = 0; i < MAX_INDICES; i += 6)
+		{
+			batched_indices[i + 0] = index + 0;
+			batched_indices[i + 1] = index + 3;
+			batched_indices[i + 2] = index + 1;
+			batched_indices[i + 3] = index + 0;
+			batched_indices[i + 4] = index + 2;
+			batched_indices[i + 5] = index + 3;
+
+			index += 4;
+		}
+
+		unsigned int unbatched_indices[] =
 		{
 			0, 3, 1,
 			0, 2, 3
 		};
 
-		if (!m_i_buff->SetData(indices, sizeof(indices), 6))
+		if (!m_batched.i_buff->SetData(batched_indices, MAX_INDICES * sizeof(unsigned int), MAX_INDICES)
+			|| !m_unbatched.i_buff->SetData(unbatched_indices, sizeof(unbatched_indices), 6))
 		{
-			INFINITY_CORE_ERROR("Errir setting Renderer2D quad model data");
+			INFINITY_CORE_ERROR("Errir setting Renderer2D indices");
 			m_error = true;
-			return;
+			return false;
 		}
 
-		m_model = Model::CreateModel(1);
+		delete[] batched_indices;
 
-		m_model->SetVertexBuffer(0, m_v_buff);
-		m_model->SetIndexBuffer(m_i_buff);
+		m_batched.model = Model::CreateModel(1);
+		m_unbatched.model = Model::CreateModel(1);
+		
+		m_batched.model->SetVertexBuffer(0, m_batched.v_buff);
+		m_batched.model->SetIndexBuffer(m_batched.i_buff);
 
-		m_shader = Shader::CreateShader({
-			{ "vertex", DataType::FLOAT2 }
+		m_unbatched.model->SetVertexBuffer(0, m_unbatched.v_buff);
+		m_unbatched.model->SetIndexBuffer(m_unbatched.i_buff);
+
+		m_batched.shader = Shader::CreateShader({
+			{ "position",   DataType::FLOAT2, 0 },
+			{ "color",      DataType::FLOAT4, 0 },
+			{ "tex_coords", DataType::FLOAT2, 0 }
 		});
 
-		if (!m_shader->Init(v_shader_source, sizeof(v_shader_source), p_shader_source, sizeof(p_shader_source)))
+		m_unbatched.shader = Shader::CreateShader({
+			{ "vertex",     DataType::FLOAT2, 0 },
+			{ "tex_coords", DataType::FLOAT2, 0 }
+		});
+
+		if (!m_batched.shader->Init(renderer2D_batched_v_source, sizeof(renderer2D_batched_v_source), renderer2D_p_source, sizeof(renderer2D_p_source))
+			|| !m_unbatched.shader->Init(renderer2D_unbatched_v_source, sizeof(renderer2D_unbatched_v_source), renderer2D_p_source, sizeof(renderer2D_p_source)))
 		{
 			INFINITY_CORE_ERROR("Error initializing Renderer2D shader");
 			m_error = true;
-			return;
+			return false;
 		}
 
-		if (!m_shader->DeclareConstants({
-				{ "model",           DataType::MAT4 },
-				{ "projection_view", DataType::MAT4 },
+		if (!m_batched.shader->DeclareConstants({
+				{ "projection_view", DataType::MAT4 }
+			}) || !m_unbatched.shader->DeclareConstants({
+				{ "model",           DataType::MAT4   },
+				{ "projection_view", DataType::MAT4   },
 				{ "color",           DataType::FLOAT4 }
 			}))
 		{
 			INFINITY_CORE_ERROR("Error declaring Renderer2D shader constants");
 			m_error = true;
-			return;
+			return false;
 		}
 
-		m_model_location           = m_shader->GetConstantLocation("model");
-		m_projection_view_location = m_shader->GetConstantLocation("projection_view");
-		m_color_location           = m_shader->GetConstantLocation("color");
+		m_batched_projection_view_location = m_batched.shader->GetConstantLocation("projection_view");
+		m_unbatched_projection_view_location = m_unbatched.shader->GetConstantLocation("projection_view");
+		m_unbatched_model_location = m_unbatched.shader->GetConstantLocation("model");
+		m_unbatched_color_location = m_unbatched.shader->GetConstantLocation("color");
 
 		m_def_texture = Texture2D::CreateTexture();
 
@@ -162,161 +183,188 @@ namespace Infinity
 		{
 			INFINITY_CORE_ERROR("Error initializing default Renderer2D texture");
 			m_error = true;
-			return;
+			return false;
 		}
+
+		return true;
 	}
 
-	Renderer2D::~Renderer2D()
+	void Renderer2D::Destroy()
 	{
 		if (m_def_texture)
 		{
 			m_def_texture->Destroy();
-			delete m_def_texture;
 		}
 
-		if (m_shader)
-		{
-			m_shader->Destroy();
-			delete m_shader;
-		}
-
-		if (m_model)
-		{
-			delete m_model;
-		}
-
-		if (m_v_buff)
-		{
-			m_v_buff->Destroy();
-			delete m_v_buff;
-		}
-
-		if (m_i_buff)
-		{
-			m_i_buff->Destroy();
-			delete m_i_buff;
-		}
+		m_batched.Destroy();
+		m_unbatched.Destroy();
 	}
 
-	void Renderer2D::RenderSingle(const QuadParams &quad)
+	void Renderer2D::StartScene(const Camera *camera)
 	{
-		if (!m_error)
-		{
-			m_shader->Bind();
+		const Mat4f &pv = camera? camera->GetProjectionViewMatrix() : Mat4f();
 
-			if (!quad.texture) m_def_texture->Bind(0);
-			else quad.texture->Bind(0);
+		// batched
+		m_batched.shader->Bind();
 
-			if (!m_shader->MapConstants())
-			{
-				INFINITY_CORE_ERROR("Error setting Renderer2D shader constants");
-				m_error = true;
-				return;
-			}
-
-			Mat4f model;
-
-			model = MakeRollPitchYawRotation(0.0f, 0.0f, quad.rotation) * MakeScale(quad.size.x * 0.5f, quad.size.y * 0.5f, 1.0f);
-
-			if (quad.centered)
-			{
-				model = Translate(model, quad.position.x, quad.position.y, 0.0f);
-			}
-			else
-			{
-				Vec2f center = quad.position + quad.size * 0.5f;
-				model = Translate(model, center.x, center.y, 0.0f);
-			}
-
-			m_shader->SetConstantMat4(m_model_location, &model[0][0], true);
-
-			Mat4f pv;
-			if (m_camera) pv = m_camera->GetProjectionViewMatrix();
-
-			m_shader->SetConstantMat4(m_projection_view_location, &pv[0][0], true);
-
-			m_shader->SetConstant4f(m_color_location, quad.color.r, quad.color.g, quad.color.b, quad.color.a);
-
-			m_shader->UnmapConstants();
-
-			m_model->Bind();
-			m_model->Render();
-		}
-	}
-
-	void Renderer2D::BatchAdd(const QuadParams &quad)
-	{
-		if (m_batches.ContainsKey(quad.texture))
-		{
-			m_batches[quad.texture].Add(quad);
-		}
-		else
-		{
-			ArrayList<QuadParams> batch = { quad };
-			m_batches[quad.texture] = std::move(batch);
-		}
-	}
-
-	void Renderer2D::BatchClear()
-	{
-		m_batches.Clear();
-	}
-
-	void Renderer2D::BatchRender()
-	{
-		if (m_error) return;
-
-		m_shader->Bind();
-		m_model->Bind();
-
-		if (!m_shader->MapConstants())
+		if (!m_batched.shader->MapConstants())
 		{
 			INFINITY_CORE_ERROR("Error mapping Renderer2D constants");
-			m_error = true;
 			return;
 		}
 
-		Mat4f pv;
-		if (m_camera) pv = m_camera->GetProjectionViewMatrix();
-		m_shader->SetConstantMat4(m_projection_view_location, &pv[0][0], true);
+		m_batched.shader->SetConstantMat4(m_batched_projection_view_location, &pv[0][0], true);
 
-		m_shader->UnmapConstants();
+		m_batched.shader->UnmapConstants();
 
-		for (auto &batch : m_batches)
+		// unbatched
+		m_unbatched.shader->Bind();
+
+		if (!m_unbatched.shader->MapConstants())
 		{
-			if (batch.key) batch.key->Bind(0);
-			else m_def_texture->Bind(0);
+			INFINITY_CORE_ERROR("Error mapping Renderer2D constants");
+			return;
+		}
 
-			for (auto &quad : batch.value)
+		m_unbatched.shader->SetConstantMat4(m_unbatched_projection_view_location, &pv[0][0], true);
+
+		m_unbatched.shader->UnmapConstants();
+	}
+
+	void Renderer2D::DrawQuad(const QuadParams &quad)
+	{
+		const Texture2D *texture = quad.texture;
+
+		if (!texture) texture = m_def_texture;
+
+		if (!quad.batched)
+		{
+			m_unbatched.shader->Bind();
+
+			if (!m_unbatched.shader->MapConstants())
 			{
-				if (!m_shader->MapConstants())
-				{
-					INFINITY_CORE_ERROR("Error mapping Renderer2D constants");
-					m_error = true;
-					return;
-				}
-
-				Mat4f model = MakeRollPitchYawRotation(0.0f, 0.0f, quad.rotation) * MakeScale(quad.size.x * 0.5f, quad.size.y * 0.5f, 1.0f);
-
-				if (quad.centered)
-				{
-					model = Translate(model, quad.position.x, quad.position.y, 0.0f);
-				}
-				else
-				{
-					Vec2f center = quad.position + quad.size * 0.5f;
-					model = Translate(model, center.x, center.y, 0.0f);
-				}
-
-				m_shader->SetConstantMat4(m_model_location, &model[0][0], true);
-				m_shader->SetConstant4f(m_color_location, quad.color.r, quad.color.g, quad.color.b, quad.color.a);
-
-				m_shader->UnmapConstants();
-
-				m_model->Render();
+				INFINITY_CORE_ERROR("Error mapping Renderer2D constants");
+				return;
 			}
+
+			Mat4f model = MakeScale(quad.size.x * 0.5f, quad.size.y * 0.5f, 0.0f);
+
+			float sinr = sin(quad.rotation);
+			float cosr = cos(quad.rotation);
+			model = Mat4f
+			{
+				 cosr, sinr, 0.0f, 0.0f,
+				-sinr, cosr, 0.0f, 0.0f,
+				 0.0f, 0.0f, 1.0f, 0.0f,
+				 0.0f, 0.0f, 0.0f, 1.0f
+			} * model;
+
+			model = Translate(model, quad.position.x, quad.position.y, 0.0f);
+
+			m_unbatched.shader->SetConstantMat4(m_unbatched_model_location, &model[0][0], true);
+			m_unbatched.shader->SetConstant4f(m_unbatched_color_location, quad.color.r, quad.color.g, quad.color.b, quad.color.a);
+
+			m_unbatched.shader->UnmapConstants();
+
+			texture->Bind(0);
+
+			m_unbatched.model->Bind();
+			m_unbatched.model->Render();
+
+			return;
+		}
+
+		Batch *&batch = m_batches[texture];
+
+		if (!batch)
+		{
+			batch = new Batch;
+		}
+
+		float sinr = sin(quad.rotation);
+		float cosr = cos(quad.rotation);
+
+		Mat2f model =
+		{
+			 cosr, sinr,
+			-sinr, cosr
+		};
+
+		Mat2f scale =
+		{
+			quad.size.x * 0.5f,               0.0f,
+			              0.0f, quad.size.y * 0.5f
+		};
+
+		model = model * scale;
+
+		Vec2f p[4] =
+		{
+			Vec2f{ -1.0f, -1.0f } * model + quad.position,
+			Vec2f{  1.0f, -1.0f } * model + quad.position,
+			Vec2f{ -1.0f,  1.0f } * model + quad.position,
+			Vec2f{  1.0f,  1.0f } * model + quad.position
+		};
+
+		Vec2f tc[4] =
+		{
+			{ 0.0f, 1.0f },
+			{ 1.0f, 1.0f },
+			{ 0.0f, 0.0f },
+			{ 1.0f, 0.0f }
+		};
+
+		for (unsigned int i = 0; i < 4; ++i)
+		{
+			batch->v_ptr->position.x = p[i].x;
+			batch->v_ptr->position.y = p[i].y;
+
+			batch->v_ptr->color.r = quad.color.r;
+			batch->v_ptr->color.g = quad.color.g;
+			batch->v_ptr->color.b = quad.color.b;
+			batch->v_ptr->color.a = quad.color.a;
+
+			batch->v_ptr->tex_coords.x = tc[i].x;
+			batch->v_ptr->tex_coords.y = tc[i].y;
+
+			++batch->v_ptr;
+		}
+
+		batch->index_count += 6;
+
+		if (batch->index_count == MAX_INDICES)
+		{
+			Flush(texture, batch);
 		}
 	}
 
-	void Renderer2D::SetCamera(const Camera *camera) { m_camera = camera; }
+	void Renderer2D::Flush(const Texture2D *texture, Batch *batch)
+	{
+		texture->Bind(0);
+
+		if (!m_batched.v_buff->SetData(batch->vertices, sizeof(batch->vertices)))
+		{
+			INFINITY_CORE_ERROR("Error setting Renderer2D vertex data");
+			return;
+		}
+
+		m_batched.shader->Bind();
+		m_batched.model->Bind();
+		m_batched.model->Render(batch->index_count);
+
+		batch->index_count = 0;
+
+		batch->v_ptr = batch->vertices;
+	}
+
+	void Renderer2D::EndScene()
+	{
+		for (auto &entry : m_batches)
+		{
+			if (entry.value->index_count)
+			{
+				Flush(entry.key, entry.value);
+			}
+		}
+	}
 }

@@ -7,6 +7,9 @@ namespace Infinity
 	OrthoCamera::OrthoCamera(const Vec2f &position, float roll, float zoom):
 		position(position),
 		roll(roll),
+		m_cache_roll(roll),
+		m_cache_sin_roll(sin(roll)),
+		m_cache_cos_roll(cos(roll)),
 		zoom(zoom)
 	{}
 
@@ -33,6 +36,48 @@ namespace Infinity
 	}
 
 	const Mat4f &OrthoCamera::GetProjectionViewMatrix() const { return m_view; }
+
+	void OrthoCamera::UpdateCache()
+	{
+		if (m_cache_roll != roll)
+		{
+			m_cache_roll = roll;
+			m_cache_sin_roll = sin(roll);
+			m_cache_cos_roll = cos(roll);
+		}
+	}
+
+	void OrthoCamera::MoveForward(float speed)
+	{
+		UpdateCache();
+
+		position.x += m_cache_sin_roll * speed;
+		position.y += m_cache_cos_roll * speed;
+	}
+
+	void OrthoCamera::MoveBackward(float speed)
+	{
+		UpdateCache();
+
+		position.x -= m_cache_sin_roll * speed;
+		position.y -= m_cache_cos_roll * speed;
+	}
+
+	void OrthoCamera::MoveLeft(float speed)
+	{
+		UpdateCache();
+
+		position.x -= m_cache_cos_roll * speed;
+		position.y += m_cache_sin_roll * speed;
+	}
+
+	void OrthoCamera::MoveRight(float speed)
+	{
+		UpdateCache();
+
+		position.x += m_cache_cos_roll * speed;
+		position.y -= m_cache_sin_roll * speed;
+	}
 
 	PerspectiveCamera::PerspectiveCamera(const Vec3f &position, float roll, float pitch, float yaw):
 		position(position),

@@ -52,7 +52,7 @@ namespace Infinity
 				m_data = m_stack_data;
 			}
 
-			Copy(list.begin(), m_data, m_size);
+			Copy(m_data, list.begin(), m_size);
 		}
 
 		Queue(const Queue &list):
@@ -71,7 +71,7 @@ namespace Infinity
 				m_data = m_stack_data;
 			}
 
-			Copy(list.m_data, m_data, m_size);
+			Copy(m_data, list.m_data, m_size);
 		}
 
 		Queue(Queue &&list) noexcept:
@@ -88,7 +88,7 @@ namespace Infinity
 
 			if (m_capacity <= STACK_DATA_LENGTH)
 			{
-				Copy(m_data, m_stack_data, m_size);
+				Move(m_stack_data, m_data, m_size);
 				m_data = m_stack_data;
 			}
 		}
@@ -111,8 +111,15 @@ namespace Infinity
 		void Pop()
 		{
 			--m_size;
-			Copy(m_data, m_data, m_size, 1, 0); // in-place copy. This only works due to the design of Copy()
 			
+			T *itr1 = m_data;
+			T *itr2 = m_data + 1;
+			
+			for (unsigned int i = 0; i < m_size; ++i)
+			{
+				*itr1++ = std::move(*itr2++);
+			}
+
 			ShrinkCapacity();
 		}
 
@@ -148,7 +155,7 @@ namespace Infinity
 				if (m_capacity > STACK_DATA_LENGTH)
 				{
 					T *temp = new T[m_capacity];
-					Copy(m_data, temp, m_prev_capacity);
+					Move(temp, m_data, m_prev_capacity);
 
 					if (m_prev_capacity > STACK_DATA_LENGTH)
 						delete[] m_data;
@@ -166,7 +173,7 @@ namespace Infinity
 				{
 					if (m_prev_capacity > STACK_DATA_LENGTH)
 					{
-						Copy(m_data, m_stack_data, m_size);
+						Move(m_stack_data, m_data, m_size);
 
 						delete[] m_data;
 
@@ -176,7 +183,7 @@ namespace Infinity
 				else
 				{
 					T *temp = new T[m_prev_capacity];
-					Copy(m_data, temp, m_size);
+					Move(temp, m_data, m_size);
 
 					delete[] m_data;
 
@@ -185,6 +192,28 @@ namespace Infinity
 
 				m_capacity = m_prev_capacity;
 				m_prev_capacity = m_size / 2;
+			}
+		}
+
+		static void Copy(T *dest, const T *src, unsigned int elems)
+		{
+			const T *itr1 = src;
+			T *itr2 = dest;
+
+			for (unsigned int i = 0; i < elems; ++i)
+			{
+				*itr2++ = *itr1++;
+			}
+		}
+
+		static void Move(T *dest, T *src, unsigned int elems)
+		{
+			T *itr1 = src;
+			T *itr2 = dest;
+
+			for (unsigned int i = 0; i < elems; ++i)
+			{
+				*itr2++ = std::move(*itr1++);
 			}
 		}
 	};

@@ -16,7 +16,7 @@ namespace Infinity
 		VertexBuffer(VertexLayout &&layout);
 		virtual ~VertexBuffer();
 
-		virtual bool Init() = 0;
+		virtual bool Init(bool dynamic = false) = 0;
 		virtual void Destroy() = 0;
 
 		virtual bool SetData(const void *data, unsigned int size) = 0;
@@ -35,7 +35,7 @@ namespace Infinity
 		IndexBuffer();
 		virtual ~IndexBuffer();
 
-		virtual bool Init() = 0;
+		virtual bool Init(bool dynamic = false) = 0;
 		virtual void Destroy() = 0;
 
 		virtual bool SetData(const void *data, unsigned int size, unsigned int index_count) = 0;
@@ -63,6 +63,7 @@ namespace Infinity
 
 		virtual void Bind() = 0;
 		virtual void Render() = 0;
+		virtual void Render(unsigned int index_count) = 0;
 
 		static Model *CreateModel(unsigned int num_vertex_buffers);
 	};

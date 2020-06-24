@@ -106,7 +106,7 @@ namespace Infinity
 		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
 		srv_desc.Format = tex_desc.Format;
 		srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
-		srv_desc.Texture2D.MipLevels = mipmap? (unsigned int)-1 : 0;
+		srv_desc.Texture2D.MipLevels = mipmap? (unsigned int)-1 : 1;
 
 		if (FAILED(device->CreateShaderResourceView(m_texture, &srv_desc, &m_shader_resource_view)))
 		{
@@ -116,7 +116,8 @@ namespace Infinity
 
 		device_context->UpdateSubresource(m_texture, 0, nullptr, m_pixels, 4 * m_width * sizeof(unsigned char), 0);
 
-		device_context->GenerateMips(m_shader_resource_view);
+		if (mipmap)
+			device_context->GenerateMips(m_shader_resource_view);
 
 		D3D11_SAMPLER_DESC sampler_desc = {};
 		sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;

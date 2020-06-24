@@ -80,22 +80,21 @@ namespace Infinity
 			{
 				asset.v_buff->Destroy();
 				delete asset.v_buff;
-				asset.v_buff = nullptr;
 			}
 
 			if (asset.i_buff)
 			{
 				asset.i_buff->Destroy();
 				delete asset.i_buff;
-				asset.i_buff = nullptr;
 			}
 
 			if (asset.model)
 			{
 				delete asset.model;
-				asset.model = nullptr;
 			}
 		}
+
+		m_models.Clear();
 	}
 
 	void LoadOBJ(std::ifstream &file, VertexBuffer *vertex_buffer, IndexBuffer *index_buffer)
@@ -319,7 +318,7 @@ namespace Infinity
 		model->SetIndexBuffer(index_buffer);
 	}
 
-	Model *ModelLoader::Load(const char *name, const char *filename, const VertexLayout &layout)
+	Model *ModelLoader::Load(StaticString name, const char *filename, const VertexLayout &layout)
 	{
 		VertexBuffer *v_buff = VertexBuffer::CreateVertexBuffer(layout);
 		IndexBuffer *i_buff = IndexBuffer::CreateIndexBuffer();
@@ -358,7 +357,7 @@ namespace Infinity
 		return model;
 	}
 
-	Model *ModelLoader::Load(const char *name, const char *filename, VertexLayout &&layout)
+	Model *ModelLoader::Load(StaticString name, const char *filename, VertexLayout &&layout)
 	{
 		VertexBuffer *v_buff = VertexBuffer::CreateVertexBuffer(std::move(layout));
 		IndexBuffer *i_buff = IndexBuffer::CreateIndexBuffer();
@@ -397,8 +396,32 @@ namespace Infinity
 		return model;
 	}
 
-	Model *ModelLoader::Get(const char *name)
+	Model *ModelLoader::Get(StaticString name)
 	{
 		return m_models[name].model;
+	}
+
+	void ModelLoader::Destroy(StaticString name)
+	{
+		ModelAsset asset = m_models[name];
+
+		if (asset.v_buff)
+		{
+			asset.v_buff->Destroy();
+			delete asset.v_buff;
+		}
+
+		if (asset.i_buff)
+		{
+			asset.i_buff->Destroy();
+			delete asset.i_buff;
+		}
+
+		if (asset.model)
+		{
+			delete asset.model;
+		}
+
+		m_models.Remove(name);
 	}
 }

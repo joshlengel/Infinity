@@ -41,7 +41,7 @@ namespace Infinity
 		m_elements((Element*)malloc(m_num_elements * sizeof(Element))),
 		m_stride()
 	{
-		Set((char*)m_elements, (char)0, m_num_elements * sizeof(Element));
+		memset(m_elements, 0, m_num_elements * sizeof(Element));
 
 		const Element *itr = list.begin();
 
@@ -68,7 +68,7 @@ namespace Infinity
 		m_elements((Element*)malloc(layout.m_num_elements * sizeof(Element))),
 		m_stride(layout.m_stride)
 	{
-		Copy((const char*)layout.m_elements, (char*)m_elements, m_num_elements * sizeof(Element));
+		memcpy(m_elements, layout.m_elements, m_num_elements * sizeof(Element));
 	}
 
 	VertexLayout::VertexLayout(VertexLayout &&layout) noexcept:
@@ -94,7 +94,7 @@ namespace Infinity
 		m_elements = (Element*)malloc(size);
 		m_stride = layout.m_stride;
 		
-		Copy((const char*)layout.m_elements, (char*)m_elements, size);
+		memcpy(m_elements, layout.m_elements, size);
 
 		return *this;
 	}

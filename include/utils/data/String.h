@@ -80,4 +80,27 @@ namespace Infinity
 			return true;
 		}
 	};
+
+	class INFINITY_API StaticString
+	{
+	private:
+		unsigned int m_length;
+		const char *m_string;
+
+	public:
+		StaticString(): m_length(0), m_string(nullptr) {}
+
+		template <unsigned int Length>
+		StaticString(const char (&str)[Length]):
+			m_length(Length),
+			m_string(str)
+		{}
+
+		bool operator==(const StaticString &str) const;
+
+		const char &operator[](unsigned int i) const;
+
+		unsigned int GetLength() const { return m_length; }
+		const char *Get() const { return m_string; }
+	};
 }

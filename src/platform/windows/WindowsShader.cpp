@@ -63,7 +63,7 @@ namespace Infinity
 	bool WindowsShader::Init(const char *vertex_source, unsigned int vs_size, const char *pixel_source, unsigned int ps_size)
 	{
 		ID3DBlob *vertex_bc, *pixel_bc, *error = nullptr;
-
+		
 		if (FAILED(D3DCompile(vertex_source, vs_size, "vertex", nullptr, nullptr, "main", "vs_5_0",
 			0, 0, &vertex_bc, &error)))
 		{

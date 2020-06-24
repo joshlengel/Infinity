@@ -305,7 +305,6 @@ namespace Infinity
 #else
 		UINT flags = 0;
 #endif // DEBUG
-
 		constexpr D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
 		constexpr unsigned int num_feature_levels = sizeof(feature_levels) / sizeof(D3D_FEATURE_LEVEL);
 

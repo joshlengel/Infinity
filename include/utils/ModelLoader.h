@@ -3,6 +3,7 @@
 #include"Core.h"
 
 #include"utils/data/Map.h"
+#include"utils/data/String.h"
 
 namespace Infinity
 {
@@ -21,7 +22,7 @@ namespace Infinity
 			Model *model;
 		};
 
-		Map<const char*, ModelAsset> m_models;
+		Map<StaticString, ModelAsset> m_models;
 
 	public:
 		ModelLoader();
@@ -29,10 +30,12 @@ namespace Infinity
 
 		void Destroy();
 
-		Model *Load(const char *name, const char *filename, const VertexLayout &layout);
-		Model *Load(const char *name, const char *filename, VertexLayout &&layout);
+		Model *Load(StaticString name, const char *filename, const VertexLayout &layout);
+		Model *Load(StaticString name, const char *filename, VertexLayout &&layout);
 
-		Model *Get(const char *name);
+		Model *Get(StaticString name);
+
+		void Destroy(StaticString name);
 
 	private:
 		void Load(const char *filename, Model *model, VertexBuffer *vertex_buffer, IndexBuffer *index_buffer);

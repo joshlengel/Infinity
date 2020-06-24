@@ -2,12 +2,13 @@
 
 #include"utils/data/ArrayList.h"
 #include"utils/data/Map.h"
-#include"utils/data/Memory.h"
 #include"utils/data/Pointer.h"
 #include"utils/data/Queue.h"
 #include"utils/data/String.h"
 
 #include"utils/math/Math.h"
+
+#include"utils/profiling/Timer.h"
 
 #include"Log.h"
 
@@ -16,6 +17,7 @@
 #include<fstream>
 #include<string>
 #include<string_view>
+#include<sstream>
 
 #ifdef INFINITY_WINDOWS
 	#define WIN32_LEAN_AND_MEAN

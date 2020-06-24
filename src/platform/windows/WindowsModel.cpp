@@ -42,20 +42,23 @@ namespace Infinity
 	WindowsVertexBuffer::WindowsVertexBuffer(const VertexLayout &layout):
 		VertexBuffer(layout),
 		m_buffer(nullptr),
-		m_prev_size()
+		m_prev_size(),
+		m_dynamic()
 	{}
 
 	WindowsVertexBuffer::WindowsVertexBuffer(VertexLayout &&layout):
 		VertexBuffer(std::move(layout)),
 		m_buffer(nullptr),
-		m_prev_size()
+		m_prev_size(),
+		m_dynamic()
 	{}
 
 	WindowsVertexBuffer::~WindowsVertexBuffer()
 	{}
 
-	bool WindowsVertexBuffer::Init()
+	bool WindowsVertexBuffer::Init(bool dynamic)
 	{
+		m_dynamic = dynamic;
 		return true;
 	}
 
@@ -81,24 +84,27 @@ namespace Infinity
 
 			if (FAILED(device_context->Map(m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subres))) return false;
 
-			memcpy(mapped_subres.pData, data, size);
+			if (data)
+				memcpy(mapped_subres.pData, data, size);
+			else
+				memset(mapped_subres.pData, 0, size);
 
 			device_context->Unmap(m_buffer, 0);
 		}
 		else
 		{
 			if (m_buffer) m_buffer->Release();
-
+			
 			D3D11_BUFFER_DESC buffer_desc = {};
-			buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+			buffer_desc.Usage = m_dynamic? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
 			buffer_desc.ByteWidth = size;
 			buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-			buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			buffer_desc.CPUAccessFlags = m_dynamic? D3D11_CPU_ACCESS_WRITE : 0;
 
 			D3D11_SUBRESOURCE_DATA subres_data = {};
 			subres_data.pSysMem = data;
 
-			if (FAILED(device->CreateBuffer(&buffer_desc, &subres_data, &m_buffer))) return false;
+			if (FAILED(device->CreateBuffer(&buffer_desc, data? &subres_data : nullptr, &m_buffer))) return false;
 			
 			m_prev_size = size;
 		}
@@ -112,14 +118,16 @@ namespace Infinity
 		m_buffer(nullptr),
 		m_prev_size(),
 		m_index_count(),
-		m_index_size()
+		m_index_size(),
+		m_dynamic()
 	{}
 
 	WindowsIndexBuffer::~WindowsIndexBuffer()
 	{}
 
-	bool WindowsIndexBuffer::Init()
+	bool WindowsIndexBuffer::Init(bool dynamic)
 	{
+		m_dynamic = dynamic;
 		return true;
 	}
 
@@ -147,7 +155,10 @@ namespace Infinity
 
 			if (FAILED(device_context->Map(m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subres))) return false;
 
-			memcpy(mapped_subres.pData, data, size);
+			if (data)
+				memcpy(mapped_subres.pData, data, size);
+			else
+				memset(mapped_subres.pData, 0, size);
 
 			device_context->Unmap(m_buffer, 0);
 		}
@@ -156,15 +167,15 @@ namespace Infinity
 			if (m_buffer) m_buffer->Release();
 
 			D3D11_BUFFER_DESC buffer_desc = {};
-			buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+			buffer_desc.Usage = m_dynamic? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
 			buffer_desc.ByteWidth = size;
 			buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-			buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			buffer_desc.CPUAccessFlags = m_dynamic? D3D11_CPU_ACCESS_WRITE : 0;
 
 			D3D11_SUBRESOURCE_DATA subres_data = {};
 			subres_data.pSysMem = data;
 
-			if (FAILED(device->CreateBuffer(&buffer_desc, &subres_data, &m_buffer))) return false;
+			if (FAILED(device->CreateBuffer(&buffer_desc, data? &subres_data : nullptr, &m_buffer))) return false;
 
 			m_prev_size = size;
 		}
@@ -213,6 +224,15 @@ namespace Infinity
 		ID3D11DeviceContext *device_context = context->device_context;
 
 		device_context->DrawIndexed(m_index_buffer->GetIndexCount(), 0, 0);
+	}
+
+	void WindowsModel::Render(unsigned int index_count)
+	{
+		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+
+		ID3D11DeviceContext *device_context = context->device_context;
+
+		device_context->DrawIndexed(index_count, 0, 0);
 	}
 }
 

@@ -13,13 +13,14 @@ namespace Infinity
 	private:
 		unsigned int m_prev_size;
 		ID3D11Buffer *m_buffer;
+		bool m_dynamic;
 
 	public:
 		WindowsVertexBuffer(const VertexLayout &layout);
 		WindowsVertexBuffer(VertexLayout &&layout);
 		~WindowsVertexBuffer();
 
-		bool Init() override;
+		bool Init(bool dynamic) override;
 		void Destroy() override;
 
 		bool SetData(const void *data, unsigned int size) override;
@@ -34,11 +35,13 @@ namespace Infinity
 		unsigned int m_index_size;
 		ID3D11Buffer *m_buffer;
 
+		bool m_dynamic;
+
 	public:
 		WindowsIndexBuffer();
 		~WindowsIndexBuffer();
 
-		bool Init() override;
+		bool Init(bool dynamic) override;
 		void Destroy() override;
 
 		bool SetData(const void *data, unsigned int size, unsigned int index_count) override;
@@ -56,6 +59,7 @@ namespace Infinity
 
 		void Bind() override;
 		void Render() override;
+		void Render(unsigned int index_count) override;
 	};
 }
 

@@ -126,7 +126,7 @@ namespace Infinity
 	{}
 #else
 	UserCreateEvent::UserCreateEvent(void *caller):
-		Event(EventType::UserCreate, caller),
+		Event(EventType::UserCreate, caller)
 	{}
 #endif // DEBUG
 

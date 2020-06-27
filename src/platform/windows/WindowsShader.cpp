@@ -8,6 +8,7 @@
 #include"event/Event.h"
 
 #include"platform/windows/WindowsWindow.h"
+#include"platform/windows/WindowsContext.h"
 
 namespace Infinity
 {
@@ -96,9 +97,9 @@ namespace Infinity
 			}
 		}
 
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11Device *device = context->device;
+		ID3D11Device *device = context->GetDevice();
 		
 		if (FAILED(device->CreateVertexShader(vertex_bc->GetBufferPointer(), vertex_bc->GetBufferSize(), nullptr, &m_vertex_shader)))
 		{
@@ -181,9 +182,9 @@ namespace Infinity
 	{
 		m_constant_layout = layout;
 
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11Device *device = context->device;
+		ID3D11Device *device = context->GetDevice();
 
 		if (m_constant_buffer)
 		{
@@ -222,9 +223,9 @@ namespace Infinity
 	{
 		m_constant_layout = std::move(layout);
 
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11Device *device = context->device;
+		ID3D11Device *device = context->GetDevice();
 
 		if (m_constant_buffer)
 		{
@@ -280,9 +281,9 @@ namespace Infinity
 
 	bool WindowsShader::MapConstants()
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		if (FAILED(device_context->Map(m_constant_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &m_constant_subres)))
 		{
@@ -295,9 +296,9 @@ namespace Infinity
 
 	void WindowsShader::UnmapConstants()
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		device_context->Unmap(m_constant_buffer, 0);
 
@@ -306,9 +307,9 @@ namespace Infinity
 
 	void WindowsShader::Bind()
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		device_context->VSSetShader(m_vertex_shader, nullptr, 0);
 		device_context->PSSetShader(m_pixel_shader, nullptr, 0);

@@ -4,6 +4,7 @@
 
 #include"platform/windows/WindowsTexture.h"
 #include"platform/windows/WindowsWindow.h"
+#include"platform/windows/WindowsContext.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include<stb_image.h>
@@ -79,10 +80,10 @@ namespace Infinity
 
 	bool WindowsTexture2D::InitDirect3D(bool mipmap, float load_bias)
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11Device *device = context->device;
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11Device *device = context->GetDevice();
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		D3D11_TEXTURE2D_DESC tex_desc;
 		tex_desc.Width = m_width;
@@ -144,9 +145,9 @@ namespace Infinity
 	
 	void WindowsTexture2D::Bind(unsigned int slot) const
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		device_context->PSSetShaderResources(slot, 1, &m_shader_resource_view);
 		device_context->PSSetSamplers(slot, 1, &m_sampler_state);

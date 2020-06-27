@@ -130,13 +130,74 @@ static const int FULLSCREEN_HOTKEY_ID = GlobalAddAtomA("FullscreenHotkeyID");
 constexpr static const long WINDOWED_STYLE = WS_OVERLAPPEDWINDOW;
 constexpr static const long WINDOWED_STYLE_EX = WS_EX_APPWINDOW;
 constexpr static const long FULLSCREEN_STYLE = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-constexpr static const long FULLSCREEN_STYLE_EX = WS_EX_APPWINDOW;// | WS_EX_TOPMOST;
+constexpr static const long FULLSCREEN_STYLE_EX = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+
+static HINSTANCE window_instance = nullptr;
+static unsigned int window_instance_count = 0;
+
+static int screen_width = 0;
+static int screen_height = 0;
+
+static int refresh_rate_numerator = 0;
+static int refresh_rate_denominator = 0;
 
 namespace Infinity
 {
-	void Window::InitListeners()
+	bool Window::Init()
 	{
+		window_instance = GetModuleHandle(nullptr);
+
+		if (!window_instance) return false;
+
+		WNDCLASSA wc = {};
+		wc.hInstance = window_instance;
+		wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+		wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+
+		wc.lpszClassName = CLASS_NAME;
+		wc.lpszMenuName = nullptr;
+		wc.lpfnWndProc = WindowsWindow::WindowProcedure;
+
+		RegisterClassA(&wc);
+
+		screen_width = GetSystemMetrics(SM_CXSCREEN);
+		screen_height = GetSystemMetrics(SM_CYSCREEN);
+
+		// find monitor refresh rate
+		IDXGIFactory *factory;
+		if (FAILED(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory))) return false;
+
+		IDXGIAdapter *adapter;
+		if (FAILED(factory->EnumAdapters(0, &adapter))) return false;
+
+		IDXGIOutput *output;
+		if (FAILED(adapter->EnumOutputs(0, &output))) return false;
+
+		unsigned int num_modes;
+		if (FAILED(output->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &num_modes, nullptr))) return false;
+
+		std::unique_ptr<DXGI_MODE_DESC[]> modes = std::make_unique<DXGI_MODE_DESC[]>(num_modes);
+		if (FAILED(output->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &num_modes, modes.get()))) return false;
+
+		for (unsigned int i = 0; i < num_modes; ++i)
+		{
+			const DXGI_MODE_DESC &mode = modes[i];
+
+			if (mode.Width == screen_width && mode.Height == screen_height)
+			{
+				refresh_rate_numerator = mode.RefreshRate.Numerator;
+				refresh_rate_denominator = mode.RefreshRate.Denominator;
+			}
+		}
+
+		output->Release();
+		adapter->Release();
+		factory->Release();
+
 		Application::GetApplication()->AddEventListener(WindowsWindow::EventListener);
+
+		return true;
 	}
 
 	Window *Window::CreateWindow()
@@ -144,8 +205,14 @@ namespace Infinity
 		return new WindowsWindow;
 	}
 
+	bool WindowsWindow::hotkey_registered = false;
+	bool WindowsWindow::main_window_fullscreened = false;
+	bool WindowsWindow::main_window_alt_enter_enabled;
+
+	bool WindowsWindow::keys[];
+	bool WindowsWindow::buttons[];
+
 	WindowsWindow::WindowsWindow():
-		m_instance(nullptr),
 		m_window_handle(nullptr),
 		m_should_close(false),
 		m_restored_state(),
@@ -157,8 +224,8 @@ namespace Infinity
 		m_prev_width(),
 		m_prev_height(),
 
-		m_vsync(true),
-		m_fullscreen(true),
+		m_vsync(),
+		m_fullscreen(),
 
 		m_swap_chain(nullptr),
 		m_device(nullptr),
@@ -168,22 +235,19 @@ namespace Infinity
 		m_depth_stencil_view(nullptr),
 		m_depth_stencil_state(nullptr),
 
-		m_context(),
-
-		m_keys(),
-		m_buttons(),
-
 		m_cursor_enabled(true),
 		m_cursor_x(),
 		m_cursor_y(),
 		m_restore_cursor_x(),
 		m_restore_cursor_y(),
+
+		m_cursor_active(),
 		m_raw_input_size(0),
-		m_raw_input_data(nullptr)
-	{
-		memset(m_keys, 0, sizeof(m_keys));
-		memset(m_buttons, 0, sizeof(m_buttons));
-	}
+		m_raw_input_data(nullptr),
+
+		m_showing(false),
+		m_is_main_window(false)
+	{}
 
 	WindowsWindow::~WindowsWindow()
 	{
@@ -196,54 +260,40 @@ namespace Infinity
 	bool WindowsWindow::Init(const WindowParams &params)
 	{
 		m_vsync = params.vsync;
-		m_fullscreen = params.fullscreen;
+		m_fullscreen = Window::main_window? false : params.fullscreen;
 
-		m_instance = GetModuleHandle(nullptr);
-
-		if (!m_instance) return false;
-
-		WNDCLASSA wc = {};
-		wc.hInstance = m_instance;
-		wc.style = CS_OWNDC;
-		wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+		m_auto_swap_buffers = params.auto_swap_buffers;
 		
-		wc.lpszClassName = CLASS_NAME;
-		wc.lpszMenuName = nullptr;
+		m_style = WINDOWED_STYLE;
+		m_style_ex = WINDOWED_STYLE_EX;
 
-		wc.lpfnWndProc = WindowProcedure;
+		int x = params.x == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.x;
+		int y = params.y == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.y;
+		int width = params.width == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.width;
+		int height = params.height == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.height;
 
-		RegisterClassA(&wc);
+		HWND parent_window = nullptr;
 
-		int x, y, width, height;
-		int screen_width = GetSystemMetrics(SM_CXSCREEN);
-		int screen_height = GetSystemMetrics(SM_CYSCREEN);
-
-		if (params.fullscreen)
+		if (Window::main_window)
 		{
-			m_style = FULLSCREEN_STYLE;
-			m_style_ex = FULLSCREEN_STYLE_EX;
-
-			x = 0;
-			y = 0;
-
-			width = screen_width;
-			height = screen_height;
+			parent_window = ((WindowsWindow*)Window::main_window)->m_window_handle;
 		}
-		else
-		{
-			m_style = WINDOWED_STYLE;
-			m_style_ex = WINDOWED_STYLE_EX;
 
-			x = params.x == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.x;
-			y = params.y == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.y;
-			width = params.width == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.width;
-			height = params.height == INFINITY_DONT_CARE? CW_USEDEFAULT : (signed)params.height;
-		}
+		RECT rect;
+		rect.left = 0;
+		rect.top = 0;
+		rect.right = width;
+		rect.bottom = height;
+
+		AdjustWindowRectEx(&rect, m_style, false, m_style_ex);
 
 		m_window_handle = CreateWindowExA(m_style_ex, CLASS_NAME, params.title, m_style,
-			x, y, width, height,
-			nullptr, nullptr, m_instance, nullptr);
+			x,
+			y,
+			width == CW_USEDEFAULT? CW_USEDEFAULT : rect.right - rect.left,
+			height == CW_USEDEFAULT? CW_USEDEFAULT : rect.bottom - rect.top,
+			parent_window,
+			nullptr, window_instance, nullptr);
 
 		if (!m_window_handle) return false;
 
@@ -266,39 +316,7 @@ namespace Infinity
 		m_width = a_width;
 		m_height = a_height;
 
-		// setup dxgi
-
-		unsigned int numerator = 0, denominator = 1;
-
-		IDXGIFactory *factory;
-		if (FAILED(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory))) return false;
-
-		IDXGIAdapter *adapter;
-		if (FAILED(factory->EnumAdapters(0, &adapter))) return false;
-
-		IDXGIOutput *output;
-		if (FAILED(adapter->EnumOutputs(0, &output))) return false;
-
-		unsigned int num_modes;
-		if (FAILED(output->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &num_modes, nullptr))) return false;
-
-		std::unique_ptr<DXGI_MODE_DESC[]> modes = std::make_unique<DXGI_MODE_DESC[]>(num_modes);
-		if (FAILED(output->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &num_modes, modes.get()))) return false;
-
-		for (unsigned int i = 0; i < num_modes; ++i)
-		{
-			const DXGI_MODE_DESC &mode = modes[i];
-
-			if (mode.Width == screen_width && mode.Height == screen_height)
-			{
-				numerator = mode.RefreshRate.Numerator;
-				denominator = mode.RefreshRate.Denominator;
-			}
-		}
-
-		output->Release();
-		adapter->Release();
-		factory->Release();
+		// setup dxgi and direct3d 11
 		
 #ifdef DEBUG
 		UINT flags = D3D11_CREATE_DEVICE_DEBUG;
@@ -315,17 +333,17 @@ namespace Infinity
 		sc_desc.BufferCount = 2;
 		sc_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 
-		sc_desc.BufferDesc.Width = a_width;
-		sc_desc.BufferDesc.Height = a_height;
+		sc_desc.BufferDesc.Width = m_width;
+		sc_desc.BufferDesc.Height = m_height;
 		sc_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		sc_desc.BufferDesc.RefreshRate.Numerator = params.vsync? numerator : 0;
-		sc_desc.BufferDesc.RefreshRate.Denominator = params.vsync? denominator : 1;
+		sc_desc.BufferDesc.RefreshRate.Numerator = params.vsync? refresh_rate_numerator : 0;
+		sc_desc.BufferDesc.RefreshRate.Denominator = params.vsync? refresh_rate_denominator : 1;
 		sc_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
 		sc_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 
 		sc_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-		sc_desc.Windowed = !params.fullscreen;
+		sc_desc.Windowed = true;
 		sc_desc.OutputWindow = m_window_handle;
 
 		sc_desc.SampleDesc.Count = 8;
@@ -403,21 +421,55 @@ namespace Infinity
 		device_adapter->Release();
 		device_dxgi->Release();
 
-		if (!RegisterHotKey(m_window_handle, FULLSCREEN_HOTKEY_ID, MOD_ALT | MOD_NOREPEAT, VK_RETURN))
+		if (!hotkey_registered)
 		{
-			INFINITY_CORE_WARN("Error setting fullscreen hotkey. Mode switch may not be supported");
+			m_is_main_window = true;
+
+			Window::main_window = this;
+
+			main_window_fullscreened = m_fullscreen;
+			main_window_alt_enter_enabled = params.enable_alt_enter_fullscreen;
+
+			if (!RegisterHotKey(m_window_handle, FULLSCREEN_HOTKEY_ID, MOD_ALT | MOD_NOREPEAT, VK_RETURN))
+			{
+				INFINITY_CORE_WARN("Error setting fullscreen hotkey. Mode switch may not be supported");
+			}
+
+			hotkey_registered = true;
 		}
 
-		Application::GetApplication()->PushEvent(new WindowResizedEvent(a_width, a_height, this));
+		m_context = new WindowsContext(m_device, m_device_context);
+		
+		Context *restore_con = context;
+		context = m_context; // Context.Init creates a rasterizer so current context must be bound beforehand
+		if (!m_context->Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing Context for window");
+			return false;
+		}
+		context = restore_con;
 
-		m_context = { this, nullptr, m_device, m_device_context, m_render_target_view, m_depth_stencil_view };
+		if (m_fullscreen)
+		{
+			Resize();
+			EnterFullscreenMode();
+		}
 
+		Application::GetApplication()->PushEvent(new WindowResizedEvent(this, m_width, m_height, this));
+		Application::GetApplication()->AddWindow(this);
+		
 		return true;
 	}
 
 	void WindowsWindow::Destroy()
 	{
-		if (Window::native_context == &m_context) Window::native_context = nullptr;
+		if (Window::context == m_context) Window::context = nullptr;
+
+		if (m_context)
+		{
+			m_context->Destroy();
+			delete m_context;
+		}
 
 		if (m_render_target_view)
 		{
@@ -462,19 +514,36 @@ namespace Infinity
 			m_device_context->Release();
 			m_device_context = nullptr;
 		}
-	}
 
-	void WindowsWindow::MakeContextCurrent()
-	{
-		Window::native_context = &m_context;
+		Application::GetApplication()->RemoveWindow(this);
 	}
 
 	void WindowsWindow::Show()
 	{
-		ShowWindow(m_window_handle, SW_SHOW);
+		if (m_is_main_window || !main_window_fullscreened)
+		{
+			ShowWindow(m_window_handle, SW_SHOW);
+		}
+
+		m_showing = true;
 	}
 
-	bool WindowsWindow::ShouldClose()
+	void WindowsWindow::Hide()
+	{
+		if (m_is_main_window || !main_window_fullscreened)
+		{
+			ShowWindow(m_window_handle, SW_HIDE);
+		}
+
+		m_showing = false;
+	}
+
+	bool WindowsWindow::Showing() const
+	{
+		return m_showing;
+	}
+
+	bool WindowsWindow::ShouldClose() const
 	{
 		return m_should_close;
 	}
@@ -490,17 +559,61 @@ namespace Infinity
 			TranslateMessage(&msg);
 			DispatchMessageA(&msg);
 		}
+
+		for (auto &entry : VK_TO_KEY_CODE)
+		{
+			bool key_pressed = GetAsyncKeyState(entry.key) & 0x8000;
+
+			if (WindowsWindow::keys[(unsigned int)entry.value])
+			{
+				if (!key_pressed)
+				{
+					WindowsWindow::keys[(unsigned int)entry.value] = false;
+					Application::GetApplication()->PushEvent(new KeyReleasedEvent(entry.value, nullptr));
+				}
+			}
+			else
+			{
+				if (key_pressed)
+				{
+					WindowsWindow::keys[(unsigned int)entry.value] = true;
+					Application::GetApplication()->PushEvent(new KeyPressedEvent(entry.value, nullptr));
+				}
+			}
+		}
+
+		for (auto &entry : VK_TO_MOUSE_CODE)
+		{
+			bool key_pressed = GetAsyncKeyState(entry.key) & 0x8000;
+
+			if (WindowsWindow::buttons[(unsigned int)entry.value])
+			{
+				if (!key_pressed)
+				{
+					WindowsWindow::buttons[(unsigned int)entry.value] = false;
+					Application::GetApplication()->PushEvent(new MouseReleasedEvent(entry.value, nullptr));
+				}
+			}
+			else
+			{
+				if (key_pressed)
+				{
+					WindowsWindow::buttons[(unsigned int)entry.value] = true;
+					Application::GetApplication()->PushEvent(new MousePressedEvent(entry.value, nullptr));
+				}
+			}
+		}
 	}
 
 	void WindowsWindow::SwapBuffers()
 	{
 		if (m_vsync) m_swap_chain->Present(1, 0);
-		else         m_swap_chain->Present(0, 0);
+		else	     m_swap_chain->Present(0, 0);
 	}
 
 	bool WindowsWindow::KeyDown(KeyCode key) const
 	{
-		for (auto entry : VK_TO_KEY_CODE)
+		for (auto &entry : VK_TO_KEY_CODE)
 		{
 			if (entry.value == key) return GetAsyncKeyState(entry.key) & 0x8000; // entry.key has nothing to do with KeyCode key
 		}
@@ -508,12 +621,12 @@ namespace Infinity
 		return false;
 	}
 
-	bool WindowsWindow::KeyPressed(KeyCode key) const { return KeyDown(key) && !m_keys[(unsigned int)key]; }
-	bool WindowsWindow::KeyReleased(KeyCode key) const { return !KeyDown(key) && m_keys[(unsigned int)key]; }
+	bool WindowsWindow::KeyPressed(KeyCode key) const { return KeyDown(key) && !keys[(unsigned int)key]; }
+	bool WindowsWindow::KeyReleased(KeyCode key) const { return !KeyDown(key) && keys[(unsigned int)key]; }
 	
 	bool WindowsWindow::MouseDown(MouseCode button) const
 	{
-		for (auto entry : VK_TO_MOUSE_CODE)
+		for (auto &entry : VK_TO_MOUSE_CODE)
 		{
 			if (entry.value == button) return GetAsyncKeyState(entry.key) & 0x8000;
 		}
@@ -521,11 +634,29 @@ namespace Infinity
 		return false;
 	}
 
-	bool WindowsWindow::MousePressed(MouseCode button) const { return MouseDown(button) && !m_buttons[(unsigned int)button]; }
-	bool WindowsWindow::MouseReleased(MouseCode button) const { return !MouseDown(button) && m_buttons[(unsigned int)button]; }
+	bool WindowsWindow::MousePressed(MouseCode button) const { return MouseDown(button) && !buttons[(unsigned int)button]; }
+	bool WindowsWindow::MouseReleased(MouseCode button) const { return !MouseDown(button) && buttons[(unsigned int)button]; }
+
+	void WindowsWindow::UpdateClipRect()
+	{
+		if (CursorEnabled())
+		{
+			ClipCursor(nullptr);
+		}
+		else
+		{
+			RECT client_rect;
+			GetClientRect(m_window_handle, &client_rect);
+			ClientToScreen(m_window_handle, (POINT*)&client_rect.left);
+			ClientToScreen(m_window_handle, (POINT*)&client_rect.right);
+			ClipCursor(&client_rect);
+		}
+	}
 
 	void WindowsWindow::EnableCursor()
 	{
+		m_cursor_enabled = true;
+
 		RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, nullptr };
 
 		if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE)))
@@ -542,15 +673,15 @@ namespace Infinity
 
 		SetCursorPos(point.x, point.y);
 
-		ClipCursor(nullptr);
+		UpdateClipRect();
 
 		ShowCursor(true);
-
-		m_cursor_enabled = true;
 	}
 
 	void WindowsWindow::DisableCursor()
 	{
+		m_cursor_enabled = false;
+
 		m_restore_cursor_x = m_cursor_x;
 		m_restore_cursor_y = m_cursor_y;
 
@@ -560,11 +691,7 @@ namespace Infinity
 		ClientToScreen(m_window_handle, &point);
 
 		SetCursorPos(point.x, point.y);
-		RECT client_rect;
-		GetClientRect(m_window_handle, &client_rect);
-		ClientToScreen(m_window_handle, (POINT*)&client_rect.left);
-		ClientToScreen(m_window_handle, (POINT*)&client_rect.right);
-		ClipCursor(&client_rect);
+		UpdateClipRect();
 
 		RAWINPUTDEVICE rid = { 0x01, 0x02, 0, m_window_handle };
 
@@ -573,8 +700,6 @@ namespace Infinity
 			INFINITY_CORE_ERROR("Error disabling cursor");
 			return;
 		}
-
-		m_cursor_enabled = false;
 	}
 
 	bool WindowsWindow::CursorEnabled() const { return m_cursor_enabled; }
@@ -663,9 +788,11 @@ namespace Infinity
 				return false;
 			}
 			
-			if (m_context.context)
+			WindowsContext *win_con = (WindowsContext*)m_context;
+
+			if (win_con)
 			{
-				if (!m_context.context->Resize(m_render_target_view, m_depth_stencil_view, m_width, m_height))
+				if (!win_con->Resize(m_render_target_view, m_depth_stencil_view, m_width, m_height))
 				{
 					INFINITY_CORE_ERROR("Error resizing context");
 					Application::GetApplication()->RequestExit();
@@ -693,6 +820,7 @@ namespace Infinity
 		case Event::EventType::WindowResized:
 		{
 			WindowsWindow *window = (WindowsWindow*)event->GetCaller();
+
 			if (!window->Resize())
 				event->Consume();
 
@@ -702,10 +830,69 @@ namespace Infinity
 		{
 			WindowsWindow *window = (WindowsWindow*)event->GetCaller();
 			window->m_should_close = true;
+			Application::GetApplication()->RemoveWindow(window);
 			DestroyWindow(window->m_window_handle);
 			break;
 		}
 		}
+	}
+
+	void WindowsWindow::EnterFullscreenMode()
+	{
+		GetWindowRect(m_window_handle, &m_restored_state);
+
+		SetWindowLongA(m_window_handle, GWL_STYLE, FULLSCREEN_STYLE);
+		SetWindowLongA(m_window_handle, GWL_EXSTYLE, FULLSCREEN_STYLE_EX);
+
+		m_width = screen_width;
+		m_height = screen_height;
+
+		if (FAILED(m_swap_chain->SetFullscreenState(true, nullptr)))
+		{
+			INFINITY_CORE_ERROR("Error changing to fullscreen state");
+			return;
+		}
+
+		if (!SetWindowPos(m_window_handle, HWND_TOP, 0, 0, m_width, m_height, SWP_FRAMECHANGED))
+		{
+			INFINITY_CORE_ERROR("Error resizing window after entering fullscreen mode");
+			Application::GetApplication()->RequestExit();
+			return;
+		}
+
+		UpdateClipRect();
+
+		ShowWindow(m_window_handle, m_showing? SW_SHOW : SW_HIDE);
+	}
+
+	void WindowsWindow::ExitFullscreenMode()
+	{
+		if (FAILED(m_swap_chain->SetFullscreenState(false, nullptr)))
+		{
+			INFINITY_CORE_ERROR("Error changing to restored state");
+			Application::GetApplication()->RequestExit();
+			return;
+		}
+
+		SetWindowLongA(m_window_handle, GWL_STYLE, WINDOWED_STYLE);
+		SetWindowLongA(m_window_handle, GWL_EXSTYLE, WINDOWED_STYLE_EX);
+
+		if (!SetWindowPos(m_window_handle, nullptr, m_restored_state.left, m_restored_state.top,
+			m_restored_state.right, m_restored_state.bottom, SWP_FRAMECHANGED | SWP_NOZORDER))
+		{
+			INFINITY_CORE_ERROR("Error resizing window after exiting fullscreen mode");
+			Application::GetApplication()->RequestExit();
+			return;
+		}
+
+		UpdateClipRect();
+
+		GetClientRect(m_window_handle, &m_restored_state);
+
+		m_width = m_restored_state.right;
+		m_height = m_restored_state.bottom;
+
+		ShowWindow(m_window_handle, m_showing? SW_SHOW : SW_HIDE);
 	}
 
 	LRESULT WindowsWindow::WindowProcedure(HWND window_handle, UINT msg, WPARAM w_param, LPARAM l_param)
@@ -714,171 +901,60 @@ namespace Infinity
 
 		switch (msg)
 		{
-		case WM_SIZE:
+		case WM_WINDOWPOSCHANGED:
 		{
-			window->m_width = LOWORD(l_param);
-			window->m_height = HIWORD(l_param);
+			RECT rect;
+			GetClientRect(window_handle, &rect);
 
-			if (w_param == SIZE_MAXIMIZED) // must handle in case of title bar double-clicks. For some reason WM_CAPTURECHANGE doesn't account for this
-			{
-				Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
-			}
+			window->m_width = (unsigned)rect.right;
+			window->m_height = (unsigned)rect.bottom;
 
 			return 0;
 		}
 		case WM_HOTKEY:
-			if (w_param == (unsigned)FULLSCREEN_HOTKEY_ID)
+			if (w_param == (unsigned)FULLSCREEN_HOTKEY_ID && main_window_alt_enter_enabled)
 			{
 				window->m_fullscreen = !window->m_fullscreen;
 				
 				if (window->m_fullscreen)
 				{
-					GetWindowRect(window_handle, &window->m_restored_state);
-
-					if (FAILED(window->m_swap_chain->SetFullscreenState(true, nullptr)))
+					main_window_fullscreened = true;
+					
+					for (Window *window : Application::GetApplication()->GetWindows())
 					{
-						INFINITY_CORE_ERROR("Error changing to fullscreen state");
-						return 0;
+						ShowWindow(((WindowsWindow*)window)->m_window_handle, SW_HIDE);
 					}
 
-					window->m_width = GetSystemMetrics(SM_CXSCREEN);
-					window->m_height = GetSystemMetrics(SM_CYSCREEN);
+					window->EnterFullscreenMode();
 
-					if (!MoveWindow(window_handle, 0, 0, window->m_width, window->m_height, true))
-					{
-						INFINITY_CORE_ERROR("Error resizing window after entering fullscreen mode");
-						Application::GetApplication()->RequestExit();
-						return 0;
-					}
-
-					Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+					Application::GetApplication()->PushEvent(new WindowResizedEvent(window, window->m_width, window->m_height, window));
 				}
 				else
 				{
-					if (FAILED(window->m_swap_chain->SetFullscreenState(false, nullptr)))
+					main_window_fullscreened = false;
+
+					window->ExitFullscreenMode();
+
+					for (Window *window : Application::GetApplication()->GetWindows())
 					{
-						INFINITY_CORE_ERROR("Error changing to restored state");
-						Application::GetApplication()->RequestExit();
-						return 0;
+						WindowsWindow *wwin = (WindowsWindow*)window;
+
+						if (wwin->m_showing)
+						{
+							ShowWindow(wwin->m_window_handle, SW_SHOW);
+						}
 					}
 
-					if (!MoveWindow(window_handle, window->m_restored_state.left, window->m_restored_state.top,
-						window->m_restored_state.right - window->m_restored_state.left, window->m_restored_state.bottom - window->m_restored_state.top, true))
-					{
-						INFINITY_CORE_ERROR("Error resizing window after exiting fullscreen mode");
-						Application::GetApplication()->RequestExit();
-						return 0;
-					}
-
-					GetClientRect(window_handle, &window->m_restored_state);
-
-					window->m_width = window->m_restored_state.right;
-					window->m_height = window->m_restored_state.bottom;
-
-					Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+					Application::GetApplication()->PushEvent(new WindowResizedEvent(window, window->m_width, window->m_height, window));
 				}
 			}
 
 			return 0;
 		case WM_EXITSIZEMOVE:
 		{
-			Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			Application::GetApplication()->PushEvent(new WindowResizedEvent(window, window->m_width, window->m_height, window));
 			return 0;
 		}
-		// Keys
-		case WM_KEYDOWN:
-		{
-			unsigned int key = (unsigned int)w_param;
-
-			auto res = VK_TO_KEY_CODE.Find(key);
-
-			if (res == VK_TO_KEY_CODE.end()) return 0;
-
-			KeyCode mapped = res->value;
-			unsigned int mapped_ui = (unsigned int)mapped;
-
-			if (!window->m_keys[mapped_ui])
-			{
-				window->m_keys[mapped_ui] = true;
-				Application::GetApplication()->PushEvent(new KeyPressedEvent(mapped, window));
-			}
-
-			return 0;
-		}
-		case WM_KEYUP:
-		{
-			unsigned int key = (unsigned int)w_param;
-
-			auto res = VK_TO_KEY_CODE.Find(key);
-
-			if (res == VK_TO_KEY_CODE.end()) return 0;
-
-			KeyCode mapped = res->value;
-			unsigned int mapped_ui = (unsigned int)mapped;
-
-			if (window->m_keys[mapped_ui])
-			{
-				window->m_keys[mapped_ui] = false;
-				Application::GetApplication()->PushEvent(new KeyReleasedEvent(mapped, window));
-			}
-
-			return 0;
-		}
-		// Mouse buttons
-		case WM_LBUTTONDOWN:
-			if (!window->m_buttons[(unsigned int)MouseCode::Left])
-			{
-				window->m_buttons[(unsigned int)MouseCode::Left] = true;
-				Application::GetApplication()->PushEvent(new MousePressedEvent(MouseCode::Left, window));
-			}
-
-			return 0;
-
-		case WM_RBUTTONDOWN:
-			if (!window->m_buttons[(unsigned int)MouseCode::Right])
-			{
-				window->m_buttons[(unsigned int)MouseCode::Right] = true;
-				Application::GetApplication()->PushEvent(new MousePressedEvent(MouseCode::Right, window));
-			}
-
-			return 0;
-
-		case WM_MBUTTONDOWN:
-			if (!window->m_buttons[(unsigned int)MouseCode::Middle])
-			{
-				window->m_buttons[(unsigned int)MouseCode::Middle] = true;
-				Application::GetApplication()->PushEvent(new MousePressedEvent(MouseCode::Middle, window));
-			}
-
-			return 0;
-
-		case WM_LBUTTONUP:
-			if (window->m_buttons[(unsigned int)MouseCode::Left])
-			{
-				window->m_buttons[(unsigned int)MouseCode::Left] = false;
-				Application::GetApplication()->PushEvent(new MouseReleasedEvent(MouseCode::Left, window));
-			}
-
-			return 0;
-
-		case WM_RBUTTONUP:
-			if (window->m_buttons[(unsigned int)MouseCode::Right])
-			{
-				window->m_buttons[(unsigned int)MouseCode::Right] = false;
-				Application::GetApplication()->PushEvent(new MouseReleasedEvent(MouseCode::Right, window));
-			}
-
-			return 0;
-
-		case WM_MBUTTONUP:
-			if (window->m_buttons[(unsigned int)MouseCode::Middle])
-			{
-				window->m_buttons[(unsigned int)MouseCode::Middle] = false;
-				Application::GetApplication()->PushEvent(new MouseReleasedEvent(MouseCode::Middle, window));
-			}
-
-			return 0;
-
 		case WM_MOUSEMOVE:
 		{
 			if (window->m_cursor_enabled)
@@ -914,7 +990,7 @@ namespace Infinity
 			return 0;
 		}
 		case WM_CLOSE:
-			Application::GetApplication()->PushEvent(new WindowClosedEvent(window));
+			Application::GetApplication()->PushEvent(new WindowClosedEvent(window, window));
 			return 0;
 
 		case WM_INPUT:

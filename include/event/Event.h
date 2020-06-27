@@ -8,17 +8,17 @@
 #include"utils/data/String.h"
 #endif // DEBUG
 
+#include"Window.h"
+
 namespace Infinity
 {
-	class Window;
-	class Context;
-
 	class INFINITY_API Event
 	{
 	public:
 		enum class EventType : unsigned char
 		{
-			WindowResized, WindowClosed, ApplicationExited,
+			WindowResized, WindowClosed,
+			ApplicationEntered, ApplicationExited,
 			UserCreate, UserUpdate, UserRender, UserDestroy,
 			KeyPressed, KeyReleased, MousePressed, MouseReleased,
 			CursorEntered, CursorExited, CursorMoved
@@ -57,11 +57,14 @@ namespace Infinity
 	class INFINITY_API WindowResizedEvent : public Event
 	{
 	private:
+		Window *m_window;
 		unsigned int m_width, m_height;
 
 	public:
-		WindowResizedEvent(unsigned int width, unsigned int height, void *caller);
+		WindowResizedEvent(Window *window, unsigned int width, unsigned int height, void *caller);
 		~WindowResizedEvent();
+
+		Window *GetWindow() const;
 
 		unsigned int GetWidth() const;
 		unsigned int GetHeight() const;
@@ -69,12 +72,29 @@ namespace Infinity
 
 	class INFINITY_API WindowClosedEvent : public Event
 	{
+	private:
+		Window *m_window;
+
 	public:
-		WindowClosedEvent(void *caller);
+		WindowClosedEvent(Window *window, void *caller);
 		~WindowClosedEvent();
+
+		Window *GetWindow() const;
 	};
 
 	// Application events
+
+	class INFINITY_API ApplicationEnteredEvent : public Event
+	{
+	private:
+		Window::WindowParams m_params;
+
+	public:
+		ApplicationEnteredEvent(void *caller);
+		~ApplicationEnteredEvent();
+
+		Window::WindowParams &GetMainWindowParams();
+	};
 
 	class INFINITY_API ApplicationExitedEvent : public Event
 	{
@@ -87,16 +107,9 @@ namespace Infinity
 
 	class INFINITY_API UserCreateEvent : public Event
 	{
-	private:
-		Window *m_window;
-		Context *m_context;
-
 	public:
-		UserCreateEvent(Window *window, Context *context, void *caller);
+		UserCreateEvent(void *caller);
 		~UserCreateEvent();
-
-		Window *GetWindow() const;
-		Context *GetContext() const;
 	};
 
 	class INFINITY_API UserUpdateEvent : public Event
@@ -113,14 +126,9 @@ namespace Infinity
 
 	class INFINITY_API UserRenderEvent : public Event
 	{
-	private:
-		Context *m_context;
-
 	public:
-		UserRenderEvent(Context *context, void *caller);
+		UserRenderEvent(void *caller);
 		~UserRenderEvent();
-
-		Context *GetContext() const;
 	};
 
 	class INFINITY_API UserDestroyEvent : public Event

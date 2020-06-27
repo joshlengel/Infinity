@@ -4,10 +4,22 @@
 
 namespace Infinity
 {
-	void *Window::native_context = nullptr;
+	Window *Window::main_window = nullptr;
+	Context *Window::context = nullptr;
 
-	Window::Window() {}
+	Window::Window():
+		m_auto_swap_buffers(),
+		m_context(nullptr)
+	{}
+
 	Window::~Window() {}
 
-	void *Window::GetNativeContext() { return native_context; }
+	void Window::MakeContextCurrent()
+	{
+		context = m_context;
+	}
+
+	bool Window::AutoSwapBuffers() const { return m_auto_swap_buffers; }
+
+	Context *Window::GetContext() { return context; }
 }

@@ -10,13 +10,9 @@
 
 namespace Infinity
 {
-	Context *Context::CreateContext()
-	{
-		return new WindowsContext;
-	}
-
-	WindowsContext::WindowsContext():
-		m_device_context(nullptr),
+	WindowsContext::WindowsContext(ID3D11Device *device, ID3D11DeviceContext *device_context):
+		m_device(device),
+		m_device_context(device_context),
 		m_render_target_view(nullptr),
 		m_depth_stencil_view(nullptr),
 		m_clear_color{ 0.0f, 0.0f, 0.0f, 1.0f }
@@ -27,21 +23,6 @@ namespace Infinity
 
 	bool WindowsContext::Init()
 	{
-		if (!Window::GetNativeContext())
-		{
-			INFINITY_CORE_ERROR("No window context bound when initializing context. Make sure to call window->MakeContextCurrent before calling this function.");
-			return false;
-		}
-
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)(Window::GetNativeContext());
-
-		m_device_context = context->device_context;
-		m_render_target_view = context->render_target_view;
-		m_depth_stencil_view = context->depth_stencil_view;
-		context->context = this;
-		context->render_target_view = nullptr;
-		context->depth_stencil_view = nullptr;
-
 		m_def_rasterizer = Infinity::Rasterizer::CreateRasterizer();
 
 		if (!m_def_rasterizer->Init())
@@ -63,13 +44,7 @@ namespace Infinity
 			m_def_rasterizer = nullptr;
 		}
 
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)(Window::GetNativeContext());
-
-		if (context && context->context == this)
-		{
-			context->context = nullptr;
-		}
-
+		m_device = nullptr;
 		m_device_context = nullptr;
 		m_render_target_view = nullptr;
 		m_depth_stencil_view = nullptr;
@@ -131,6 +106,9 @@ namespace Infinity
 			INFINITY_CORE_ERROR("Error clearing context: Device context is null.");
 		}
 	}
+
+	ID3D11Device *WindowsContext::GetDevice() const { return m_device; }
+	ID3D11DeviceContext *WindowsContext::GetDeviceContext() const { return m_device_context; }
 }
 
 #endif // INFINITY_WINDOWS

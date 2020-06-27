@@ -218,6 +218,32 @@ namespace Infinity
 			ShrinkCapacity();
 		}
 
+		void Remove(const T &elem)
+		{
+			T *itr1 = m_data;
+
+			unsigned int i = 0;
+			for (; itr1 != end(); ++itr1)
+			{
+				if (*itr1 == elem) goto elem_found;
+				++i;
+			}
+
+			return;
+
+		elem_found:
+			T *itr2 = itr1 + 1;
+
+			--m_size;
+
+			for (unsigned int j = 0; j < m_size - i; ++j)
+			{
+				*itr1++ = std::move(*itr2++);
+			}
+
+			ShrinkCapacity();
+		}
+
 		void RemoveBack()
 		{
 			--m_size;

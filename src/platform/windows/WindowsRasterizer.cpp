@@ -5,6 +5,7 @@
 #include"platform/windows/WindowsRasterizer.h"
 
 #include"platform/windows/WindowsWindow.h"
+#include"platform/windows/WindowsContext.h"
 
 namespace Infinity
 {
@@ -23,9 +24,9 @@ namespace Infinity
 
 	bool WindowsRasterizer::Init(CullMode cull, bool blend)
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11Device *device = context->device;
+		ID3D11Device *device = context->GetDevice();
 
 		D3D11_RASTERIZER_DESC raster_desc = {};
 		raster_desc.AntialiasedLineEnable = true;
@@ -103,9 +104,9 @@ namespace Infinity
 
 	void WindowsRasterizer::Bind()
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		device_context->RSSetState(m_raster_state);
 		device_context->OMSetBlendState(m_blend_state, nullptr, 0xffffffff);

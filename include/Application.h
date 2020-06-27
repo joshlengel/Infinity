@@ -7,14 +7,14 @@
 
 #include"utils/data/ArrayList.h"
 
+#include"Window.h"
+
 namespace Infinity
 {
-	class Window;
-	class Context;
-
 	class Event;
 	class WindowResizedEvent;
 	class WindowClosedEvent;
+	class ApplicationEnteredEvent;
 	class ApplicationExitedEvent;
 	class UserCreateEvent;
 	class UserUpdateEvent;
@@ -33,11 +33,14 @@ namespace Infinity
 	class INFINITY_API Application
 	{
 	private:
-		Window *m_window;
-		Context *m_context;
-		EventQueue m_queue;
-
+		EventQueue m_event_queue;
 		ArrayList<void(*)(Event*)> m_event_listeners;
+
+		Window *m_main_window;
+		Window::WindowParams m_main_params;
+		ArrayList<Window*> m_windows;
+
+		bool m_exit;
 
 		static Application *application;
 
@@ -56,6 +59,7 @@ namespace Infinity
 		virtual void OnUserRender(UserRenderEvent *event);
 		virtual void OnUserDestroy(UserDestroyEvent *event);
 
+		virtual void OnApplicationEntered(ApplicationEnteredEvent *event);
 		virtual void OnApplicationExited(ApplicationExitedEvent *event);
 
 		virtual void OnWindowResized(WindowResizedEvent *event);
@@ -70,14 +74,20 @@ namespace Infinity
 		virtual void OnCursorExited(CursorExitedEvent *event);
 		virtual void OnCursorMoved(CursorMovedEvent *event);
 
-		bool KeyDown(KeyCode key);
-		bool KeyPressed(KeyCode key);
-		bool KeyReleased(KeyCode key);
-		bool MouseDown(MouseCode button);
-		bool MousePressed(MouseCode button);
-		bool MouseReleased(MouseCode button);
+		bool KeyDown(KeyCode key) const;
+		bool KeyPressed(KeyCode key) const;
+		bool KeyReleased(KeyCode key) const;
+		bool MouseDown(MouseCode key) const;
+		bool MousePressed(MouseCode key) const;
+		bool MouseReleased(MouseCode key) const;
+
+		Window *GetMainWindow();
 
 		static Application *GetApplication();
+
+		void AddWindow(Window *window);
+		void RemoveWindow(Window *window);
+		const ArrayList<Window*> &GetWindows() const;
 
 	private:
 		void DispatchEvents();

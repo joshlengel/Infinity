@@ -42,14 +42,16 @@ namespace Infinity
 	// WindowResizedEvent
 
 #ifdef DEBUG
-	WindowResizedEvent::WindowResizedEvent(unsigned int width, unsigned int height, void *caller):
+	WindowResizedEvent::WindowResizedEvent(Window *window, unsigned int width, unsigned int height, void *caller):
 		Event(EventType::WindowResized, "WindowResizedEvent", caller),
+		m_window(window),
 		m_width(width),
 		m_height(height)
 	{}
 #else
-	WindowResizedEvent::WindowResizedEvent(unsigned int width, unsigned int height, void *caller):
+	WindowResizedEvent::WindowResizedEvent(Window *window, unsigned int width, unsigned int height, void *caller):
 		Event(EventType::WindowResized, caller),
+		m_window(window),
 		m_width(width),
 		m_height(height)
 	{}
@@ -58,23 +60,48 @@ namespace Infinity
 	WindowResizedEvent::~WindowResizedEvent()
 	{}
 
+	Window *WindowResizedEvent::GetWindow() const { return m_window; }
+
 	unsigned int WindowResizedEvent::GetWidth() const { return m_width; }
 	unsigned int WindowResizedEvent::GetHeight() const { return m_height; }
 
 	// WindowClosedEvent
 
 #ifdef DEBUG
-	WindowClosedEvent::WindowClosedEvent(void *caller):
-		Event(EventType::WindowClosed, "WindowClosedEvent", caller)
+	WindowClosedEvent::WindowClosedEvent(Window *window, void *caller):
+		Event(EventType::WindowClosed, "WindowClosedEvent", caller),
+		m_window(window)
 	{}
 #else
-	WindowClosedEvent::WindowClosedEvent(void *caller):
-		Event(EventType::WindowClosed, caller)
+	WindowClosedEvent::WindowClosedEvent(Window *window, void *caller):
+		Event(EventType::WindowClosed, caller),
+		m_window(window)
 	{}
 #endif // DEBUG
 
 	WindowClosedEvent::~WindowClosedEvent()
 	{}
+
+	Window *WindowClosedEvent::GetWindow() const { return m_window; }
+
+	// ApplicationEnteredEvent
+
+#ifdef DEBUG
+	ApplicationEnteredEvent::ApplicationEnteredEvent(void *caller):
+		Event(EventType::ApplicationEntered, "ApplicationEnteredEvent", caller),
+		m_params()
+	{}
+#else
+	ApplicationEnteredEvent::ApplicationEnteredEvent(void *caller):
+		Event(EventType::ApplicationEntered, caller),
+		m_params()
+	{}
+#endif // DEBUG
+
+	ApplicationEnteredEvent::~ApplicationEnteredEvent()
+	{}
+
+	Window::WindowParams &ApplicationEnteredEvent::GetMainWindowParams() { return m_params; }
 
 	// ApplicationExitedEvent
 
@@ -94,24 +121,17 @@ namespace Infinity
 	// UserCreateEvent
 
 #ifdef DEBUG
-	UserCreateEvent::UserCreateEvent(Window *window, Context *context, void *caller):
-		Event(EventType::UserCreate, "UserCreateEvent", caller),
-		m_window(window),
-		m_context(context)
+	UserCreateEvent::UserCreateEvent(void *caller):
+		Event(EventType::UserCreate, "UserCreateEvent", caller)
 	{}
 #else
-	UserCreateEvent::UserCreateEvent(Window *window, Context *context, void *caller):
+	UserCreateEvent::UserCreateEvent(void *caller):
 		Event(EventType::UserCreate, caller),
-		m_window(window),
-		m_context(context)
 	{}
 #endif // DEBUG
 
 	UserCreateEvent::~UserCreateEvent()
 	{}
-
-	Window *UserCreateEvent::GetWindow() const { return m_window; }
-	Context *UserCreateEvent::GetContext() const { return m_context; }
 
 	// UserUpdateEvent
 
@@ -135,21 +155,17 @@ namespace Infinity
 	// UserRenderEvent
 
 #ifdef DEBUG
-	UserRenderEvent::UserRenderEvent(Context *context, void *caller):
-		Event(EventType::UserRender, "UserRenderEvent", caller),
-		m_context(context)
+	UserRenderEvent::UserRenderEvent(void *caller):
+		Event(EventType::UserRender, "UserRenderEvent", caller)
 	{}
 #else
-	UserRenderEvent::UserRenderEvent(Context *context, void *caller):
-		Event(EventType::UserRender, caller),
-		m_context(context)
+	UserRenderEvent::UserRenderEvent(void *caller):
+		Event(EventType::UserRender, caller)
 	{}
 #endif // DEBUG
 
 	UserRenderEvent::~UserRenderEvent()
 	{}
-
-	Context *UserRenderEvent::GetContext() const { return m_context; }
 
 	// UserDestroyEvent
 

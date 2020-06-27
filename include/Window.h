@@ -6,38 +6,54 @@
 
 namespace Infinity
 {
-	struct INFINITY_API WindowParams
-	{
-		const char *title = "Infinity Game Engine";
-
-		unsigned int x = INFINITY_DONT_CARE;
-		unsigned int y = INFINITY_DONT_CARE;
-		unsigned int width = INFINITY_DONT_CARE;
-		unsigned int height = INFINITY_DONT_CARE;
-
-		bool vsync = true;
-		bool fullscreen = false;
-	};
+	class Context;
 
 	class INFINITY_API Window
 	{
-	protected:
-		static void *native_context;
+	public:
+		struct INFINITY_API WindowParams
+		{
+			const char *title = "Infinity Game Engine";
 
+			unsigned int x = INFINITY_DONT_CARE;
+			unsigned int y = INFINITY_DONT_CARE;
+			unsigned int width = INFINITY_DONT_CARE;
+			unsigned int height = INFINITY_DONT_CARE;
+
+			bool vsync = true;
+			bool fullscreen = false;
+
+			bool auto_swap_buffers = true;
+			
+			// These flags only have an effect on the main window
+			bool auto_show = true;
+			bool enable_alt_enter_fullscreen = true;
+		};
+
+	protected:
+		static Window *main_window;
+		bool m_auto_swap_buffers;
+
+		static Context *context;
+		Context *m_context;
+		
 	public:
 		Window();
 		virtual ~Window();
 
-		static void InitListeners();
+		static bool Init();
 
 		virtual bool Init(const WindowParams &params) = 0;
 		virtual void Destroy() = 0;
 
-		virtual void MakeContextCurrent() = 0;
+		void MakeContextCurrent();
 
 		virtual void Show() = 0;
+		virtual void Hide() = 0;
 
-		virtual bool ShouldClose() = 0;
+		virtual bool Showing() const = 0;
+
+		virtual bool ShouldClose() const = 0;
 
 		static void PollInput();
 		virtual void SwapBuffers() = 0;
@@ -57,7 +73,9 @@ namespace Infinity
 		virtual int GetCursorPosX() const = 0;
 		virtual int GetCursorPosY() const = 0;
 
+		bool AutoSwapBuffers() const;
+
 		static Window *CreateWindow();
-		static void *GetNativeContext();
+		static Context *GetContext();
 	};
 }

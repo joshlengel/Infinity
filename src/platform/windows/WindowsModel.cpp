@@ -5,6 +5,7 @@
 #include"platform/windows/WindowsModel.h"
 
 #include"platform/windows/WindowsWindow.h"
+#include"platform/windows/WindowsContext.h"
 
 constexpr DXGI_FORMAT GetFormat(unsigned int bytes)
 {
@@ -73,10 +74,10 @@ namespace Infinity
 
 	bool WindowsVertexBuffer::SetData(const void *data, unsigned int size)
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 		
-		ID3D11Device *device = context->device;
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11Device *device = context->GetDevice();
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		if (size <= m_prev_size)
 		{
@@ -142,10 +143,10 @@ namespace Infinity
 
 	bool WindowsIndexBuffer::SetData(const void *data, unsigned int size, unsigned int index_count)
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11Device *device = context->device;
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11Device *device = context->GetDevice();
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		m_index_count = index_count;
 
@@ -199,9 +200,9 @@ namespace Infinity
 
 	void WindowsModel::Bind()
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		for (unsigned int i = 0; i < m_num_vertex_buffers; ++i)
 		{
@@ -219,18 +220,18 @@ namespace Infinity
 
 	void WindowsModel::Render()
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		device_context->DrawIndexed(m_index_buffer->GetIndexCount(), 0, 0);
 	}
 
 	void WindowsModel::Render(unsigned int index_count)
 	{
-		WindowsWindow::WindowsWindowContext *context = (WindowsWindow::WindowsWindowContext*)Window::GetNativeContext();
+		WindowsContext *context = (WindowsContext*)Window::GetContext();
 
-		ID3D11DeviceContext *device_context = context->device_context;
+		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
 		device_context->DrawIndexed(index_count, 0, 0);
 	}

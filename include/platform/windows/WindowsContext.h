@@ -14,6 +14,7 @@ namespace Infinity
 	class INFINITY_API WindowsContext : public Context
 	{
 	private:
+		ID3D11Device *m_device;
 		ID3D11DeviceContext *m_device_context;
 		ID3D11RenderTargetView *m_render_target_view;
 		ID3D11DepthStencilView *m_depth_stencil_view;
@@ -21,7 +22,7 @@ namespace Infinity
 		float m_clear_color[4];
 
 	public:
-		WindowsContext();
+		WindowsContext(ID3D11Device *device, ID3D11DeviceContext *device_context);
 		~WindowsContext();
 
 		bool Init() override;
@@ -31,6 +32,9 @@ namespace Infinity
 
 		void SetClearColor(float r, float g, float b, float a) override;
 		void Clear() override;
+
+		ID3D11Device *GetDevice() const;
+		ID3D11DeviceContext *GetDeviceContext() const;
 	};
 }
 

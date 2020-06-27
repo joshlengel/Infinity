@@ -28,4 +28,5 @@
 	#include<d3dcompiler.h>
 
 	#undef CreateWindow
+	#undef GetClassName
 #endif // INFINITY_WINDOWS

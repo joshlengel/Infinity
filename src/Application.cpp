@@ -13,10 +13,13 @@ namespace Infinity
 	Application *Application::application = nullptr;
 
 	Application::Application():
-		m_window(nullptr),
-		m_context(nullptr),
-		m_queue(),
-		m_event_listeners()
+		m_event_queue(),
+		m_event_listeners(),
+		m_exit(false),
+
+		m_main_window(nullptr),
+		m_main_params(),
+		m_windows()
 	{
 		application = this;
 	}
@@ -26,7 +29,7 @@ namespace Infinity
 	void Application::DispatchEvents()
 	{
 		Event *event;
-		while (event = m_queue.PopEvent())
+		while (event = m_event_queue.PopEvent())
 		{
 			for (unsigned int i = 0; i < m_event_listeners.GetSize(); ++i)
 			{
@@ -44,48 +47,41 @@ namespace Infinity
 
 	void Application::Run()
 	{
-		Window::InitListeners();
+		if (!Window::Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing Window API");
+			return;
+		}
 
 		AddEventListener(CallOnUserEvent);
 
-		m_window = Window::CreateWindow();
-		m_context = Context::CreateContext();
+		ApplicationEnteredEvent *entered_event = new ApplicationEnteredEvent(this);
 
-		WindowParams params;
-
-		std::chrono::high_resolution_clock::time_point t1, t2;
-
-		if (!m_window->Init(params))
-		{
-			INFINITY_CORE_ERROR("Error initializing window");
-			goto clean_up;
-		}
-		else
-		{
-			INFINITY_CORE_TRACE("Window created successfully");
-		}
-
-		m_window->MakeContextCurrent();
-
-		if (!m_context->Init())
-		{
-			INFINITY_CORE_ERROR("Error initializing context");
-			goto clean_up;
-		}
-		else
-		{
-			INFINITY_CORE_TRACE("Context created successfully");
-		}
-
-		PushEvent(new UserCreateEvent(m_window, m_context, this));
-
+		PushEvent(entered_event);
 		DispatchEvents();
 
-		m_window->Show();
+		m_main_window = Window::CreateWindow();
 
+		if (!m_main_window->Init(m_main_params))
+		{
+			INFINITY_CORE_ERROR("Error creating main window");
+			return;
+		}
+
+		m_main_window->MakeContextCurrent();
+		
+		PushEvent(new UserCreateEvent(this));
+		DispatchEvents();
+
+		if (m_main_params.auto_show)
+			m_main_window->Show();
+
+		INFINITY_CORE_TRACE("Application initialized");
+
+		std::chrono::high_resolution_clock::time_point t1, t2;
 		t1 = t2 = std::chrono::high_resolution_clock::now();
 
-		while (!m_window->ShouldClose())
+		while (!m_exit)
 		{
 			t2 = std::chrono::high_resolution_clock::now();
 			double dt = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
@@ -97,25 +93,27 @@ namespace Infinity
 
 			Window::PollInput();
 
-			PushEvent(new UserRenderEvent(m_context, this));
+			PushEvent(new UserRenderEvent(this));
 
 			DispatchEvents();
 
-			m_window->SwapBuffers();
+			for (Window *window : m_windows)
+			{
+				if (window->AutoSwapBuffers()) window->SwapBuffers();
+			}
 		}
 
-		INFINITY_CORE_TRACE("Window closed");
+		INFINITY_CORE_TRACE("Application exited");
 
 		PushEvent(new UserDestroyEvent(this));
 
 		DispatchEvents();
 
-	clean_up:
-		m_context->Destroy();
-		m_window->Destroy();
-
-		delete m_context;
-		delete m_window;
+		if (m_main_window)
+		{
+			m_main_window->Destroy();
+			delete m_main_window;
+		}
 	}
 
 	void Application::AddEventListener(void(*listener)(Event*))
@@ -123,7 +121,7 @@ namespace Infinity
 		m_event_listeners.Add(listener);
 	}
 
-	void Application::PushEvent(Event *event) { m_queue.PushEvent(event); }
+	void Application::PushEvent(Event *event) { m_event_queue.PushEvent(event); }
 	void Application::RequestExit() { PushEvent(new ApplicationExitedEvent(nullptr)); }
 
 	void Application::OnUserCreate(UserCreateEvent *event) {}
@@ -131,6 +129,7 @@ namespace Infinity
 	void Application::OnUserRender(UserRenderEvent *event) {}
 	void Application::OnUserDestroy(UserDestroyEvent *event) {}
 
+	void Application::OnApplicationEntered(ApplicationEnteredEvent *event) {}
 	void Application::OnApplicationExited(ApplicationExitedEvent *event) {}
 
 	void Application::OnWindowResized(WindowResizedEvent *event) {}
@@ -144,6 +143,13 @@ namespace Infinity
 	void Application::OnCursorEntered(CursorEnteredEvent *event) {}
 	void Application::OnCursorExited(CursorExitedEvent *event) {}
 	void Application::OnCursorMoved(CursorMovedEvent *event) {}
+
+	bool Application::KeyDown(KeyCode key) const { return m_main_window->KeyDown(key); }
+	bool Application::KeyPressed(KeyCode key) const { return m_main_window->KeyPressed(key); }
+	bool Application::KeyReleased(KeyCode key) const { return m_main_window->KeyReleased(key); }
+	bool Application::MouseDown(MouseCode key) const { return m_main_window->MouseDown(key); }
+	bool Application::MousePressed(MouseCode key) const { return m_main_window->MousePressed(key); }
+	bool Application::MouseReleased(MouseCode key) const { return m_main_window->MouseReleased(key); }
 
 	void Application::CallOnUserEvent(Event *event)
 	{
@@ -169,10 +175,23 @@ namespace Infinity
 			application->OnUserDestroy((UserDestroyEvent*)event);
 			break;
 		}
+		case Event::EventType::ApplicationEntered:
+		{
+			ApplicationEnteredEvent *aee = (ApplicationEnteredEvent*)event;
+			application->OnApplicationEntered(aee);
+			application->m_main_params = aee->GetMainWindowParams();
+			break;
+		}
 		case Event::EventType::ApplicationExited:
 		{
-			application->PushEvent(new WindowClosedEvent(application->m_window));
 			application->OnApplicationExited((ApplicationExitedEvent*)event);
+
+			for (Window *window : application->m_windows)
+			{
+				application->PushEvent(new WindowClosedEvent(window, window));
+			}
+
+			application->m_exit = true;
 			break;
 		}
 		case Event::EventType::WindowResized:
@@ -182,7 +201,14 @@ namespace Infinity
 		}
 		case Event::EventType::WindowClosed:
 		{
-			application->OnWindowClosed((WindowClosedEvent*)event);
+			WindowClosedEvent *wce = (WindowClosedEvent*)event;
+			application->OnWindowClosed(wce);
+
+			if (application->m_windows.Empty() || wce->GetWindow() == application->m_main_window)
+			{
+				application->PushEvent(new ApplicationExitedEvent(application));
+			}
+
 			break;
 		}
 		case Event::EventType::KeyPressed:
@@ -223,12 +249,11 @@ namespace Infinity
 		}
 	}
 
-	bool Application::KeyDown(KeyCode key) { return m_window->KeyDown(key); }
-	bool Application::KeyPressed(KeyCode key) { return m_window->KeyPressed(key); }
-	bool Application::KeyReleased(KeyCode key) { return m_window->KeyReleased(key); }
-	bool Application::MouseDown(MouseCode button) { return m_window->MouseDown(button); }
-	bool Application::MousePressed(MouseCode button) { return m_window->MousePressed(button); }
-	bool Application::MouseReleased(MouseCode button) { return m_window->MouseReleased(button); }
+	Window *Application::GetMainWindow() { return m_main_window; }
 
 	Application *Application::GetApplication() { return application; }
+
+	void Application::AddWindow(Window *window) { m_windows.Add(window); }
+	void Application::RemoveWindow(Window *window) { m_windows.Remove(window); }
+	const ArrayList<Window*> &Application::GetWindows() const { return m_windows; }
 }

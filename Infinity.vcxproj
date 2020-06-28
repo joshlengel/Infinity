@@ -188,6 +188,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Application.h" />
+    <ClInclude Include="include\window\BaseWindow.h" />
     <ClInclude Include="include\Context.h" />
     <ClInclude Include="include\Core.h" />
     <ClInclude Include="include\EntryPoint.h" />
@@ -201,7 +202,8 @@
     <ClInclude Include="include\Type.h" />
     <ClInclude Include="include\utils\ShaderLoader.h" />
     <ClInclude Include="include\VertexLayout.h" />
-    <ClInclude Include="include\Window.h" />
+    <ClInclude Include="include\window\Input.h" />
+    <ClInclude Include="include\window\Window.h" />
     <ClInclude Include="include\event\Event.h" />
     <ClInclude Include="include\event\EventQueue.h" />
     <ClInclude Include="include\event\InputCodes.h" />
@@ -224,6 +226,7 @@
     <ClInclude Include="include\utils\math\Transform.h" />
     <ClInclude Include="include\utils\math\Vector.h" />
     <ClInclude Include="include\utils\profiling\Timer.h" />
+    <ClInclude Include="include\window\WindowSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application.cpp" />
@@ -233,6 +236,7 @@
     </ClCompile>
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\platform\windows\WindowsInput.cpp" />
     <ClCompile Include="src\Rasterizer.cpp" />
     <ClCompile Include="src\renderer2d\Renderer2DShaderSource.cpp" />
     <ClCompile Include="src\Shader.cpp" />
@@ -241,7 +245,8 @@
     <ClCompile Include="src\utils\data\String.cpp" />
     <ClCompile Include="src\utils\ShaderLoader.cpp" />
     <ClCompile Include="src\VertexLayout.cpp" />
-    <ClCompile Include="src\Window.cpp" />
+    <ClCompile Include="src\window\BaseWindow.cpp" />
+    <ClCompile Include="src\window\Window.cpp" />
     <ClCompile Include="src\event\Event.cpp" />
     <ClCompile Include="src\event\EventQueue.cpp" />
     <ClCompile Include="src\platform\windows\WindowsContext.cpp" />
@@ -254,6 +259,7 @@
     <ClCompile Include="src\utils\Camera.cpp" />
     <ClCompile Include="src\utils\ModelLoader.cpp" />
     <ClCompile Include="src\utils\profiling\Timer.cpp" />
+    <ClCompile Include="src\window\WindowSystem.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

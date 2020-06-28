@@ -2,6 +2,8 @@
 
 #include"event/Event.h"
 
+#include"window/Window.h"
+
 namespace Infinity
 {
 	// Event
@@ -42,16 +44,14 @@ namespace Infinity
 	// WindowResizedEvent
 
 #ifdef DEBUG
-	WindowResizedEvent::WindowResizedEvent(Window *window, unsigned int width, unsigned int height, void *caller):
+	WindowResizedEvent::WindowResizedEvent(unsigned int width, unsigned int height, void *caller):
 		Event(EventType::WindowResized, "WindowResizedEvent", caller),
-		m_window(window),
 		m_width(width),
 		m_height(height)
 	{}
 #else
-	WindowResizedEvent::WindowResizedEvent(Window *window, unsigned int width, unsigned int height, void *caller):
+	WindowResizedEvent::WindowResizedEvent(unsigned int width, unsigned int height, void *caller):
 		Event(EventType::WindowResized, caller),
-		m_window(window),
 		m_width(width),
 		m_height(height)
 	{}
@@ -60,29 +60,23 @@ namespace Infinity
 	WindowResizedEvent::~WindowResizedEvent()
 	{}
 
-	Window *WindowResizedEvent::GetWindow() const { return m_window; }
-
 	unsigned int WindowResizedEvent::GetWidth() const { return m_width; }
 	unsigned int WindowResizedEvent::GetHeight() const { return m_height; }
 
 	// WindowClosedEvent
 
 #ifdef DEBUG
-	WindowClosedEvent::WindowClosedEvent(Window *window, void *caller):
-		Event(EventType::WindowClosed, "WindowClosedEvent", caller),
-		m_window(window)
+	WindowClosedEvent::WindowClosedEvent(void *caller):
+		Event(EventType::WindowClosed, "WindowClosedEvent", caller)
 	{}
 #else
-	WindowClosedEvent::WindowClosedEvent(Window *window, void *caller):
-		Event(EventType::WindowClosed, caller),
-		m_window(window)
+	WindowClosedEvent::WindowClosedEvent(void *caller):
+		Event(EventType::WindowClosed, caller)
 	{}
 #endif // DEBUG
 
 	WindowClosedEvent::~WindowClosedEvent()
 	{}
-
-	Window *WindowClosedEvent::GetWindow() const { return m_window; }
 
 	// ApplicationEnteredEvent
 
@@ -101,7 +95,7 @@ namespace Infinity
 	ApplicationEnteredEvent::~ApplicationEnteredEvent()
 	{}
 
-	Window::WindowParams &ApplicationEnteredEvent::GetMainWindowParams() { return m_params; }
+	Window::MainWindowParams &ApplicationEnteredEvent::GetMainWindowParams() { return m_params; }
 
 	// ApplicationExitedEvent
 

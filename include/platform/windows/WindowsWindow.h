@@ -12,7 +12,7 @@
 #undef CreateWindow
 
 #include"Core.h"
-#include"Window.h"
+#include"window/BaseWindow.h"
 #include"event/InputCodes.h"
 
 struct IDXGISwapChain;
@@ -28,18 +28,45 @@ namespace Infinity
 	class WindowsContext;
 	class Event;
 
-	class INFINITY_API WindowsWindow : public Window
+	class INFINITY_API WindowsWindowIcon : public WindowIcon
+	{
+	private:
+		HICON m_big_icon_handle;
+		HICON m_small_icon_handle;
+
+	public:
+		WindowsWindowIcon();
+		~WindowsWindowIcon();
+
+		bool Init(const char *file_path) override;
+		void Destroy() override;
+
+		HICON GetBigHICON() const;
+		HICON GetSmallHICON() const;
+	};
+
+	class INFINITY_API WindowsWindow : public BaseWindow
 	{
 	private:
 		HWND m_window_handle;
 		DWORD m_style, m_style_ex;
 
-		bool m_should_close;
+		unsigned int m_x, m_y, m_width, m_height, m_prev_width, m_prev_height;
 		RECT m_restored_state;
-		bool m_cursor_active;
-		unsigned int m_width, m_height, m_prev_width, m_prev_height;
+		bool m_minimized;
+
+		bool m_should_close;
+		bool m_showing;
+
+		bool m_vsync;
+		bool m_fullscreen, m_enable_alt_enter_fullscreen;
 		
-		bool m_vsync, m_fullscreen;
+		bool m_cursor_active;
+		bool m_cursor_enabled;
+		int m_cursor_x, m_cursor_y, m_restore_cursor_x, m_restore_cursor_y;
+
+		unsigned int m_raw_input_size;
+		void *m_raw_input_data;
 
 		IDXGISwapChain *m_swap_chain;
 		ID3D11Device *m_device;
@@ -49,26 +76,11 @@ namespace Infinity
 		ID3D11DepthStencilState *m_depth_stencil_state;
 		ID3D11Texture2D *m_depth_stencil_buffer;
 
-		bool m_cursor_enabled;
-		int m_cursor_x, m_cursor_y, m_restore_cursor_x, m_restore_cursor_y;
-		unsigned int m_raw_input_size;
-		void *m_raw_input_data;
-
-		bool m_showing;
-		bool m_is_main_window;
-
-		static bool hotkey_registered; // only used for the main (first) window created
-		static bool main_window_fullscreened;
-		static bool main_window_alt_enter_enabled;
-
 	public:
-		static bool keys[(unsigned int)KeyCode::Last];
-		static bool buttons[(unsigned int)MouseCode::Last];
-
 		WindowsWindow();
 		~WindowsWindow();
 
-		bool Init(const WindowParams &params) override;
+		bool Init(const BaseWindowParams &params) override;
 		void Destroy() override;
 
 		void Show() override;
@@ -79,21 +91,18 @@ namespace Infinity
 		void SwapBuffers() override;
 		bool ShouldClose() const override;
 		
-		bool KeyDown(KeyCode key) const override;
-		bool KeyPressed(KeyCode key) const override;
-		bool KeyReleased(KeyCode key) const override;
-		bool MouseDown(MouseCode button) const override;
-		bool MousePressed(MouseCode button) const override;
-		bool MouseReleased(MouseCode button) const override;
+		void SetInputDeviceState(InputDevice device, InputDeviceState state) override;
+		InputDeviceState GetInputDeviceState(InputDevice device) const override;
 
-		void EnableCursor() override;
-		void DisableCursor() override;
-
-		bool CursorEnabled() const override;
+		unsigned int GetX() const override;
+		unsigned int GetY() const override;
+		unsigned int GetWidth() const override;
+		unsigned int GetHeight() const override;
 
 		int GetCursorPosX() const override;
 		int GetCursorPosY() const override;
 
+		static void HotKeyHandler();
 		static void EventListener(Event *event);
 
 		static LRESULT CALLBACK WindowProcedure(HWND window_handle, UINT message, WPARAM w_param, LPARAM l_param);

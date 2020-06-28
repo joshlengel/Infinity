@@ -2,7 +2,8 @@
 
 #include"Application.h"
 
-#include"Window.h"
+#include"window/Window.h"
+#include"window/BaseWindow.h"
 #include"Context.h"
 #include"Log.h"
 
@@ -17,9 +18,8 @@ namespace Infinity
 		m_event_listeners(),
 		m_exit(false),
 
-		m_main_window(nullptr),
 		m_main_params(),
-		m_windows()
+		m_window_system()
 	{
 		application = this;
 	}
@@ -47,11 +47,13 @@ namespace Infinity
 
 	void Application::Run()
 	{
-		if (!Window::Init())
+		if (!BaseWindow::Init())
 		{
 			INFINITY_CORE_ERROR("Error initializing Window API");
 			return;
 		}
+
+		WindowSystem::Init();
 
 		AddEventListener(CallOnUserEvent);
 
@@ -60,21 +62,18 @@ namespace Infinity
 		PushEvent(entered_event);
 		DispatchEvents();
 
-		m_main_window = Window::CreateWindow();
-
-		if (!m_main_window->Init(m_main_params))
+		if (!m_window_system.InitMainWindow(m_main_params))
 		{
-			INFINITY_CORE_ERROR("Error creating main window");
+			INFINITY_CORE_ERROR("Error initializing window system");
 			return;
 		}
 
-		m_main_window->MakeContextCurrent();
+		m_window_system.GetMainWindow()->MakeContextCurrent();
 		
 		PushEvent(new UserCreateEvent(this));
 		DispatchEvents();
 
-		if (m_main_params.auto_show)
-			m_main_window->Show();
+		m_window_system.GetMainWindow()->Show();
 
 		INFINITY_CORE_TRACE("Application initialized");
 
@@ -91,15 +90,17 @@ namespace Infinity
 
 			DispatchEvents();
 
-			Window::PollInput();
+			BaseWindow::PollInput();
+			_Impl::Update();
 
 			PushEvent(new UserRenderEvent(this));
 
 			DispatchEvents();
 
-			for (Window *window : m_windows)
+			m_window_system.GetMainWindow()->SwapBuffers();
+			for (Window *window : m_window_system.GetChildWindows())
 			{
-				if (window->AutoSwapBuffers()) window->SwapBuffers();
+				if (((BaseWindow*)window)->AutoSwapBuffers()) window->SwapBuffers();
 			}
 		}
 
@@ -108,12 +109,6 @@ namespace Infinity
 		PushEvent(new UserDestroyEvent(this));
 
 		DispatchEvents();
-
-		if (m_main_window)
-		{
-			m_main_window->Destroy();
-			delete m_main_window;
-		}
 	}
 
 	void Application::AddEventListener(void(*listener)(Event*))
@@ -143,13 +138,6 @@ namespace Infinity
 	void Application::OnCursorEntered(CursorEnteredEvent *event) {}
 	void Application::OnCursorExited(CursorExitedEvent *event) {}
 	void Application::OnCursorMoved(CursorMovedEvent *event) {}
-
-	bool Application::KeyDown(KeyCode key) const { return m_main_window->KeyDown(key); }
-	bool Application::KeyPressed(KeyCode key) const { return m_main_window->KeyPressed(key); }
-	bool Application::KeyReleased(KeyCode key) const { return m_main_window->KeyReleased(key); }
-	bool Application::MouseDown(MouseCode key) const { return m_main_window->MouseDown(key); }
-	bool Application::MousePressed(MouseCode key) const { return m_main_window->MousePressed(key); }
-	bool Application::MouseReleased(MouseCode key) const { return m_main_window->MouseReleased(key); }
 
 	void Application::CallOnUserEvent(Event *event)
 	{
@@ -184,12 +172,12 @@ namespace Infinity
 		}
 		case Event::EventType::ApplicationExited:
 		{
-			application->OnApplicationExited((ApplicationExitedEvent*)event);
+			Window *main_window = application->m_window_system.GetMainWindow();
+			
+			if (!main_window->ShouldClose())
+				application->PushEvent(new WindowClosedEvent(main_window));
 
-			for (Window *window : application->m_windows)
-			{
-				application->PushEvent(new WindowClosedEvent(window, window));
-			}
+			application->OnApplicationExited((ApplicationExitedEvent*)event);
 
 			application->m_exit = true;
 			break;
@@ -201,13 +189,12 @@ namespace Infinity
 		}
 		case Event::EventType::WindowClosed:
 		{
-			WindowClosedEvent *wce = (WindowClosedEvent*)event;
-			application->OnWindowClosed(wce);
-
-			if (application->m_windows.Empty() || wce->GetWindow() == application->m_main_window)
+			if ((Window*)event->GetCaller() == application->m_window_system.GetMainWindow())
 			{
 				application->PushEvent(new ApplicationExitedEvent(application));
 			}
+
+			application->OnWindowClosed((WindowClosedEvent*)event);
 
 			break;
 		}
@@ -249,11 +236,7 @@ namespace Infinity
 		}
 	}
 
-	Window *Application::GetMainWindow() { return m_main_window; }
+	const WindowSystem &Application::GetWindowSystem() const { return m_window_system; }
 
 	Application *Application::GetApplication() { return application; }
-
-	void Application::AddWindow(Window *window) { m_windows.Add(window); }
-	void Application::RemoveWindow(Window *window) { m_windows.Remove(window); }
-	const ArrayList<Window*> &Application::GetWindows() const { return m_windows; }
 }

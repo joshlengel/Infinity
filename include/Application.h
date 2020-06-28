@@ -7,7 +7,7 @@
 
 #include"utils/data/ArrayList.h"
 
-#include"Window.h"
+#include"window/WindowSystem.h"
 
 namespace Infinity
 {
@@ -36,9 +36,8 @@ namespace Infinity
 		EventQueue m_event_queue;
 		ArrayList<void(*)(Event*)> m_event_listeners;
 
-		Window *m_main_window;
-		Window::WindowParams m_main_params;
-		ArrayList<Window*> m_windows;
+		Window::MainWindowParams m_main_params;
+		WindowSystem m_window_system;
 
 		bool m_exit;
 
@@ -73,21 +72,10 @@ namespace Infinity
 		virtual void OnCursorEntered(CursorEnteredEvent *event);
 		virtual void OnCursorExited(CursorExitedEvent *event);
 		virtual void OnCursorMoved(CursorMovedEvent *event);
-
-		bool KeyDown(KeyCode key) const;
-		bool KeyPressed(KeyCode key) const;
-		bool KeyReleased(KeyCode key) const;
-		bool MouseDown(MouseCode key) const;
-		bool MousePressed(MouseCode key) const;
-		bool MouseReleased(MouseCode key) const;
-
-		Window *GetMainWindow();
+		
+		const WindowSystem &GetWindowSystem() const;
 
 		static Application *GetApplication();
-
-		void AddWindow(Window *window);
-		void RemoveWindow(Window *window);
-		const ArrayList<Window*> &GetWindows() const;
 
 	private:
 		void DispatchEvents();

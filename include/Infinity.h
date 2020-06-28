@@ -4,7 +4,10 @@
 
 #include"Application.h"
 
-#include"Window.h"
+#include"window/Window.h"
+#include"window/WindowSystem.h"
+#include"window/Input.h"
+
 #include"Context.h"
 #include"Model.h"
 #include"Shader.h"

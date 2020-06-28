@@ -8,7 +8,7 @@
 #include"utils/data/String.h"
 #endif // DEBUG
 
-#include"Window.h"
+#include"window/Window.h"
 
 namespace Infinity
 {
@@ -17,6 +17,7 @@ namespace Infinity
 	public:
 		enum class EventType : unsigned char
 		{
+			// Handleable by client
 			WindowResized, WindowClosed,
 			ApplicationEntered, ApplicationExited,
 			UserCreate, UserUpdate, UserRender, UserDestroy,
@@ -57,14 +58,11 @@ namespace Infinity
 	class INFINITY_API WindowResizedEvent : public Event
 	{
 	private:
-		Window *m_window;
 		unsigned int m_width, m_height;
 
 	public:
-		WindowResizedEvent(Window *window, unsigned int width, unsigned int height, void *caller);
+		WindowResizedEvent(unsigned int width, unsigned int height, void *caller);
 		~WindowResizedEvent();
-
-		Window *GetWindow() const;
 
 		unsigned int GetWidth() const;
 		unsigned int GetHeight() const;
@@ -72,14 +70,9 @@ namespace Infinity
 
 	class INFINITY_API WindowClosedEvent : public Event
 	{
-	private:
-		Window *m_window;
-
 	public:
-		WindowClosedEvent(Window *window, void *caller);
+		WindowClosedEvent(void *caller);
 		~WindowClosedEvent();
-
-		Window *GetWindow() const;
 	};
 
 	// Application events
@@ -87,13 +80,13 @@ namespace Infinity
 	class INFINITY_API ApplicationEnteredEvent : public Event
 	{
 	private:
-		Window::WindowParams m_params;
+		Window::MainWindowParams m_params;
 
 	public:
 		ApplicationEnteredEvent(void *caller);
 		~ApplicationEnteredEvent();
 
-		Window::WindowParams &GetMainWindowParams();
+		Window::MainWindowParams &GetMainWindowParams();
 	};
 
 	class INFINITY_API ApplicationExitedEvent : public Event

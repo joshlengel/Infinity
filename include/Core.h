@@ -55,3 +55,5 @@
 
 	#define INFINITY_PROFILE_SCOPE(name)
 #endif // DEBUG
+
+#define INFINITY_TO_STATIC_EVENT_FUNC(func) std::bind(&func, this, std::placeholders::_1)

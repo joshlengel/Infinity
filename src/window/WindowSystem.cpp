@@ -5,15 +5,10 @@
 
 #include"event/Event.h"
 
-#include"Application.h"
+#include"application/BaseApplication.h"
 
 namespace Infinity
 {
-	void WindowSystem::Init()
-	{
-		Application::GetApplication()->AddEventListener(EventHandler);
-	}
-
 	WindowSystem::WindowSystem():
 		m_main_window(nullptr),
 		m_child_windows()
@@ -55,6 +50,8 @@ namespace Infinity
 			INFINITY_CORE_ERROR("Error initializing main window");
 			return false;
 		}
+
+		BaseApplication::GetApplication()->AddEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(WindowSystem::EventHandler));
 
 		return true;
 	}
@@ -100,7 +97,7 @@ namespace Infinity
 			((BaseWindow*)window)->Destroy();
 			delete window;
 
-			m_child_windows.Remove(window);
+			Remove(m_child_windows, window);
 		}
 	}
 
@@ -109,19 +106,18 @@ namespace Infinity
 		switch (event->GetType())
 		{
 		case Event::EventType::WindowClosed:
-			const WindowSystem &system = Application::GetApplication()->GetWindowSystem();
 			BaseWindow *window = (BaseWindow*)event->GetCaller();
 
-			if (window == system.GetMainWindow())
+			if (window == GetMainWindow())
 			{
-				for (Window *window : system.GetChildWindows())
+				for (Window *window : GetChildWindows())
 				{
-					Application::GetApplication()->PushEvent(new WindowClosedEvent(window));
+					BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window));
 				}
 			}
-			else if (system.GetChildWindows().Contains(window))
+			else if (Contains(GetChildWindows(), (Window*)window))
 			{
-				system.m_child_windows.Remove(window);
+				Remove(m_child_windows, (Window*)window);
 				window->Destroy();
 				delete window;
 			}

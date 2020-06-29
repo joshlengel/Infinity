@@ -218,20 +218,11 @@ namespace Infinity
 			ShrinkCapacity();
 		}
 
-		void Remove(const T &elem)
+		void Remove(T *itr)
 		{
-			T *itr1 = m_data;
+			unsigned int i = (unsigned int)((itr - begin()) / sizeof(T));
 
-			unsigned int i = 0;
-			for (; itr1 != end(); ++itr1)
-			{
-				if (*itr1 == elem) goto elem_found;
-				++i;
-			}
-
-			return;
-
-		elem_found:
+			T *itr1 = itr;
 			T *itr2 = itr1 + 1;
 
 			--m_size;
@@ -262,15 +253,6 @@ namespace Infinity
 
 			m_capacity = STACK_DATA_LENGTH;
 			m_prev_capacity = STACK_DATA_LENGTH;
-		}
-
-		bool Contains(const T &elem) const
-		{
-			for (const T &t : *this)
-				if (t == elem)
-					return true;
-
-			return false;
 		}
 
 		unsigned int GetSize() const { return m_size; }
@@ -359,4 +341,40 @@ namespace Infinity
 			}
 		}
 	};
+
+	template <typename T>
+	bool Contains(const ArrayList<T> &list, const T &elem)
+	{
+		for (const T &t : list)
+			if (t == elem)
+				return true;
+
+		return false;
+	}
+
+	template <typename T>
+	const T *Find(const ArrayList<T> &list, const T &elem)
+	{
+		for (const T *itr = list.begin(); itr != list.end(); ++itr)
+			if (*itr == elem)
+				return itr;
+
+		return list.end();
+	}
+
+	template <typename T>
+	T *Find(ArrayList<T> &list, const T &elem)
+	{
+		for (T *itr = list.begin(); itr != list.end(); ++itr)
+			if (*itr == elem)
+				return itr;
+
+		return list.end();
+	}
+
+	template <typename T>
+	void Remove(ArrayList<T> &list, const T &elem)
+	{
+		list.Remove(Find(list, elem));
+	}
 }

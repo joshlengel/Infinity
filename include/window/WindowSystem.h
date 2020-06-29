@@ -19,8 +19,6 @@ namespace Infinity
 		WindowSystem();
 		~WindowSystem();
 
-		static void Init();
-
 		bool InitMainWindow(const Window::MainWindowParams &params);
 
 		Window *GetMainWindow() const;
@@ -30,6 +28,6 @@ namespace Infinity
 		void DestroyChildWindow(Window *window) const;
 
 	private:
-		static void EventHandler(Event *event);
+		void EventHandler(Event *event);
 	};
 }

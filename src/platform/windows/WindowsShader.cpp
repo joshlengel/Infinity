@@ -4,9 +4,6 @@
 
 #include"platform/windows/WindowsShader.h"
 
-#include"Application.h"
-#include"event/Event.h"
-
 #include"platform/windows/WindowsWindow.h"
 #include"platform/windows/WindowsContext.h"
 

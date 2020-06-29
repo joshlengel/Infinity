@@ -6,7 +6,7 @@
 
 #include"platform/windows/WindowsContext.h"
 
-#include"Application.h"
+#include"application/BaseApplication.h"
 #include"event/Event.h"
 
 constexpr static const char CLASS_NAME[] = "Infinity WindowsWindow Class";
@@ -120,8 +120,6 @@ namespace Infinity
 		{
 			INFINITY_CORE_WARN("Unable to register hotkey for alt+enter");
 		}
-
-		Application::GetApplication()->AddEventListener(WindowsWindow::EventListener);
 
 		return true;
 	}
@@ -388,7 +386,8 @@ namespace Infinity
 			SendMessageA(m_window_handle, WM_SETICON, ICON_BIG, (LPARAM)icon->GetBigHICON());
 		}
 
-		Application::GetApplication()->PushEvent(new WindowResizedEvent(m_width, m_height, this));
+		BaseApplication::GetApplication()->AddPriorityEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(WindowsWindow::EventHandler));
+		BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(m_width, m_height, this));
 
 		return true;
 	}
@@ -641,7 +640,7 @@ namespace Infinity
 			if (FAILED(m_swap_chain->ResizeBuffers(0, m_width, m_height, DXGI_FORMAT_UNKNOWN, 0)))
 			{
 				INFINITY_CORE_ERROR("Error resizing window buffers");
-				Application::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->RequestExit();
 				return false;
 			}
 			
@@ -649,7 +648,7 @@ namespace Infinity
 			if (FAILED(m_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&back_buffer)))
 			{
 				INFINITY_CORE_ERROR("Error getting window buffer after resize");
-				Application::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->RequestExit();
 				return false;
 			}
 
@@ -664,7 +663,7 @@ namespace Infinity
 			{
 				INFINITY_CORE_ERROR("Error creating render target view after resize");
 				back_buffer->Release();
-				Application::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->RequestExit();
 				return false;
 			}
 
@@ -677,7 +676,7 @@ namespace Infinity
 			if (FAILED(m_device->CreateTexture2D(&dsb_desc, nullptr, &m_depth_stencil_buffer)))
 			{
 				INFINITY_CORE_ERROR("Error creating depth stencil buffer after resizing context");
-				Application::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->RequestExit();
 				return false;
 			}
 
@@ -688,7 +687,7 @@ namespace Infinity
 			if (FAILED(m_device->CreateDepthStencilView(m_depth_stencil_buffer, &dsv_desc, &m_depth_stencil_view)))
 			{
 				INFINITY_CORE_ERROR("Error creating depth stencil view after resizing context");
-				Application::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->RequestExit();
 				return false;
 			}
 			
@@ -699,7 +698,7 @@ namespace Infinity
 				if (!win_con->Resize(m_render_target_view, m_depth_stencil_view, m_width, m_height))
 				{
 					INFINITY_CORE_ERROR("Error resizing context");
-					Application::GetApplication()->RequestExit();
+					BaseApplication::GetApplication()->RequestExit();
 					return false;
 				}
 			}
@@ -717,24 +716,23 @@ namespace Infinity
 		return false;
 	}
 
-	void WindowsWindow::EventListener(Event *event)
+	void WindowsWindow::EventHandler(Event *event)
 	{
+		if (event->GetCaller() != this) return;
+
 		switch (event->GetType())
 		{
 		case Event::EventType::WindowResized:
 		{
-			WindowsWindow *window = (WindowsWindow*)event->GetCaller();
-
-			if (!window->Resize())
+			if (!Resize())
 				event->Consume();
 
 			break;
 		}
 		case Event::EventType::WindowClosed:
 		{
-			WindowsWindow *window = (WindowsWindow*)event->GetCaller();
-			window->m_should_close = true;
-			DestroyWindow(window->m_window_handle);
+			m_should_close = true;
+			DestroyWindow(m_window_handle);
 			break;
 		}
 		}
@@ -759,7 +757,7 @@ namespace Infinity
 		if (!SetWindowPos(m_window_handle, HWND_TOP, 0, 0, m_width, m_height, SWP_FRAMECHANGED))
 		{
 			INFINITY_CORE_ERROR("Error resizing window after entering fullscreen mode");
-			Application::GetApplication()->RequestExit();
+			BaseApplication::GetApplication()->RequestExit();
 			return;
 		}
 
@@ -773,7 +771,7 @@ namespace Infinity
 		if (FAILED(m_swap_chain->SetFullscreenState(false, nullptr)))
 		{
 			INFINITY_CORE_ERROR("Error changing to restored state");
-			Application::GetApplication()->RequestExit();
+			BaseApplication::GetApplication()->RequestExit();
 			return;
 		}
 
@@ -785,7 +783,7 @@ namespace Infinity
 			SWP_NOZORDER | SWP_NOACTIVATE))
 		{
 			INFINITY_CORE_ERROR("Error resizing window after exiting fullscreen mode");
-			Application::GetApplication()->RequestExit();
+			BaseApplication::GetApplication()->RequestExit();
 			return;
 		}
 
@@ -801,25 +799,25 @@ namespace Infinity
 
 	void WindowsWindow::HotKeyHandler()
 	{
-		WindowsWindow *window = (WindowsWindow*)Application::GetApplication()->GetWindowSystem().GetMainWindow();
+		WindowsWindow *window = (WindowsWindow*)BaseApplication::GetApplication()->GetWindowSystem().GetMainWindow();
 		window->m_fullscreen = !window->m_fullscreen;
 
 		if (window->m_fullscreen)
 		{
-			for (Window *window : Application::GetApplication()->GetWindowSystem().GetChildWindows())
+			for (Window *window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
 			{
 				ShowWindow(((WindowsWindow*)window)->m_window_handle, SW_HIDE);
 			}
 
 			window->EnterFullscreenMode();
 
-			Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
 		}
 		else
 		{
 			window->ExitFullscreenMode();
 
-			for (Window *window : Application::GetApplication()->GetWindowSystem().GetChildWindows())
+			for (Window *window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
 			{
 				WindowsWindow *wwin = (WindowsWindow*)window;
 
@@ -829,7 +827,7 @@ namespace Infinity
 				}
 			}
 
-			Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
 		}
 	}
 
@@ -854,7 +852,7 @@ namespace Infinity
 			if (window->m_minimized && (window->m_width != 0 || window->m_height != 0))
 			{
 				window->m_minimized = false;
-				Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
 				return 0;
 			}
 
@@ -864,7 +862,7 @@ namespace Infinity
 				window->m_minimized = true;
 
 			case SIZE_MAXIMIZED:
-				Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
 				break;
 			}
 
@@ -872,7 +870,7 @@ namespace Infinity
 		}
 		case WM_EXITSIZEMOVE:
 		{
-			Application::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
 			return 0;
 		}
 		case WM_MOUSEMOVE:
@@ -891,10 +889,10 @@ namespace Infinity
 					TrackMouseEvent(&tme);
 
 					window->m_cursor_active = true;
-					Application::GetApplication()->PushEvent(new CursorEnteredEvent(window));
+					BaseApplication::GetApplication()->PushEvent(new CursorEnteredEvent(window));
 				}
 
-				Application::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
+				BaseApplication::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
 			}
 
 			return 0;
@@ -904,13 +902,13 @@ namespace Infinity
 			if (window->m_cursor_active)
 			{
 				window->m_cursor_active = false;
-				Application::GetApplication()->PushEvent(new CursorExitedEvent(window));
+				BaseApplication::GetApplication()->PushEvent(new CursorExitedEvent(window));
 			}
 
 			return 0;
 		}
 		case WM_CLOSE:
-			Application::GetApplication()->PushEvent(new WindowClosedEvent(window));
+			BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window));
 			return 0;
 
 		case WM_INPUT:
@@ -953,7 +951,7 @@ namespace Infinity
 				window->m_cursor_x += cx;
 				window->m_cursor_y += cy;
 
-				Application::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
+				BaseApplication::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
 			}
 
 			return 0;

@@ -18,6 +18,7 @@
 #include<string>
 #include<string_view>
 #include<sstream>
+#include<functional>
 
 #ifdef INFINITY_WINDOWS
 	#define WIN32_LEAN_AND_MEAN

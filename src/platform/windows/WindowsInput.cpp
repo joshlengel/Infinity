@@ -5,7 +5,7 @@
 #include"event/Event.h"
 #include"event/InputCodes.h"
 
-#include"Application.h"
+#include"application/BaseApplication.h"
 
 static const Infinity::Map<unsigned int, Infinity::KeyCode> VK_TO_KEY_CODE =
 {
@@ -165,7 +165,7 @@ namespace Infinity
 					if (!key_pressed)
 					{
 						keys[(unsigned int)entry.value] = false;
-						Application::GetApplication()->PushEvent(new KeyReleasedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new KeyReleasedEvent(entry.value, nullptr));
 					}
 				}
 				else
@@ -173,7 +173,7 @@ namespace Infinity
 					if (key_pressed)
 					{
 						keys[(unsigned int)entry.value] = true;
-						Application::GetApplication()->PushEvent(new KeyPressedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new KeyPressedEvent(entry.value, nullptr));
 					}
 				}
 			}
@@ -187,7 +187,7 @@ namespace Infinity
 					if (!key_pressed)
 					{
 						buttons[(unsigned int)entry.value] = false;
-						Application::GetApplication()->PushEvent(new MouseReleasedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new MouseReleasedEvent(entry.value, nullptr));
 					}
 				}
 				else
@@ -195,7 +195,7 @@ namespace Infinity
 					if (key_pressed)
 					{
 						buttons[(unsigned int)entry.value] = true;
-						Application::GetApplication()->PushEvent(new MousePressedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new MousePressedEvent(entry.value, nullptr));
 					}
 				}
 			}

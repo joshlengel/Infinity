@@ -1,6 +1,15 @@
 #pragma once
 
+namespace Infinity
+{
+	class Application;
+
+	void INFINITY_API ExecuteMain(Application *application);
+}
+
 #ifdef INFINITY_ENTRY_POINT
+
+extern Infinity::Application *Infinity::CreateApplication();
 
 int main(int argc, char **argv)
 {
@@ -8,11 +17,7 @@ int main(int argc, char **argv)
 	Infinity::Log::Init();
 #endif // DEBUG
 
-	Infinity::Application *app = Infinity::CreateApplication();
-
-	app->Run();
-
-	delete app;
+	Infinity::ExecuteMain(Infinity::CreateApplication());
 }
 
 #endif // INFINITY_ENTRY_POINT

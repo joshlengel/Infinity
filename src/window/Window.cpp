@@ -1,11 +1,6 @@
 #include"InfinityPCH.h"
 
 #include"window/Window.h"
-#include"window/BaseWindow.h"
-
-#include"Application.h"
-
-#include"event/Event.h"
 
 namespace Infinity
 {

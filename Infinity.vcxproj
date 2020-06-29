@@ -187,7 +187,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\Application.h" />
+    <ClInclude Include="include\application\Application.h" />
+    <ClInclude Include="include\application\BaseApplication.h" />
     <ClInclude Include="include\window\BaseWindow.h" />
     <ClInclude Include="include\Context.h" />
     <ClInclude Include="include\Core.h" />
@@ -229,8 +230,10 @@
     <ClInclude Include="include\window\WindowSystem.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\application\Application.cpp" />
+    <ClCompile Include="src\application\BaseApplication.cpp" />
     <ClCompile Include="src\Context.cpp" />
+    <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\InfinityPCH.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

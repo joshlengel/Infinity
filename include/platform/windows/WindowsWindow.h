@@ -102,9 +102,9 @@ namespace Infinity
 		int GetCursorPosX() const override;
 		int GetCursorPosY() const override;
 
-		static void HotKeyHandler();
-		static void EventListener(Event *event);
+		void EventHandler(Event *event);
 
+		static void HotKeyHandler();
 		static LRESULT CALLBACK WindowProcedure(HWND window_handle, UINT message, WPARAM w_param, LPARAM l_param);
 
 	private:

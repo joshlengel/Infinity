@@ -20,24 +20,24 @@ constexpr DXGI_FORMAT GetFormat(unsigned int bytes)
 
 namespace Infinity
 {
-	VertexBuffer *VertexBuffer::CreateVertexBuffer(const VertexLayout &layout)
+	Resource<VertexBuffer> VertexBuffer::CreateVertexBuffer(const VertexLayout &layout)
 	{
-		return new WindowsVertexBuffer(layout);
+		return ResourceCast<VertexBuffer>(MakeResource<WindowsVertexBuffer>(layout));
 	}
 
-	VertexBuffer *VertexBuffer::CreateVertexBuffer(VertexLayout &&layout)
+	Resource<VertexBuffer> VertexBuffer::CreateVertexBuffer(VertexLayout &&layout)
 	{
-		return new WindowsVertexBuffer(std::move(layout));
+		return ResourceCast<VertexBuffer>(MakeResource<WindowsVertexBuffer>(std::forward<VertexLayout>(layout)));
 	}
 
-	IndexBuffer *IndexBuffer::CreateIndexBuffer()
+	Resource<IndexBuffer> IndexBuffer::CreateIndexBuffer()
 	{
-		return new WindowsIndexBuffer;
+		return ResourceCast<IndexBuffer>(MakeResource<WindowsIndexBuffer>());
 	}
 
-	Model *Model::CreateModel(unsigned int num_vertex_buffers)
+	Resource<Model> Model::CreateModel(unsigned int num_vertex_buffers)
 	{
-		return new WindowsModel(num_vertex_buffers);
+		return ResourceCast<Model>(MakeResource<WindowsModel>(num_vertex_buffers));
 	}
 
 	WindowsVertexBuffer::WindowsVertexBuffer(const VertexLayout &layout):
@@ -55,7 +55,12 @@ namespace Infinity
 	{}
 
 	WindowsVertexBuffer::~WindowsVertexBuffer()
-	{}
+	{
+		if (m_buffer)
+		{
+			m_buffer->Release();
+		}
+	}
 
 	bool WindowsVertexBuffer::Init(bool dynamic)
 	{
@@ -63,18 +68,9 @@ namespace Infinity
 		return true;
 	}
 
-	void WindowsVertexBuffer::Destroy()
-	{
-		if (m_buffer)
-		{
-			m_buffer->Release();
-			m_buffer = nullptr;
-		}
-	}
-
 	bool WindowsVertexBuffer::SetData(const void *data, unsigned int size)
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 		
 		ID3D11Device *device = context->GetDevice();
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
@@ -124,7 +120,12 @@ namespace Infinity
 	{}
 
 	WindowsIndexBuffer::~WindowsIndexBuffer()
-	{}
+	{
+		if (m_buffer)
+		{
+			m_buffer->Release();
+		}
+	}
 
 	bool WindowsIndexBuffer::Init(bool dynamic)
 	{
@@ -132,18 +133,9 @@ namespace Infinity
 		return true;
 	}
 
-	void WindowsIndexBuffer::Destroy()
-	{
-		if (m_buffer)
-		{
-			m_buffer->Release();
-			m_buffer = nullptr;
-		}
-	}
-
 	bool WindowsIndexBuffer::SetData(const void *data, unsigned int size, unsigned int index_count)
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11Device *device = context->GetDevice();
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
@@ -200,11 +192,11 @@ namespace Infinity
 
 	void WindowsModel::Bind()
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
-		for (unsigned int i = 0; i < m_num_vertex_buffers; ++i)
+		for (unsigned int i = 0; i < m_vertex_buffers.GetSize(); ++i)
 		{
 			ID3D11Buffer *buffer = (ID3D11Buffer*)m_vertex_buffers[i]->GetNativeBuffer();
 			unsigned int stride = m_vertex_buffers[i]->GetLayout().GetStride();
@@ -220,7 +212,7 @@ namespace Infinity
 
 	void WindowsModel::Render()
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
@@ -229,7 +221,7 @@ namespace Infinity
 
 	void WindowsModel::Render(unsigned int index_count)
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 

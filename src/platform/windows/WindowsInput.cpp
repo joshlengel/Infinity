@@ -165,7 +165,7 @@ namespace Infinity
 					if (!key_pressed)
 					{
 						keys[(unsigned int)entry.value] = false;
-						BaseApplication::GetApplication()->PushEvent(new KeyReleasedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new KeyReleasedEvent(entry.value));
 					}
 				}
 				else
@@ -173,7 +173,7 @@ namespace Infinity
 					if (key_pressed)
 					{
 						keys[(unsigned int)entry.value] = true;
-						BaseApplication::GetApplication()->PushEvent(new KeyPressedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new KeyPressedEvent(entry.value));
 					}
 				}
 			}
@@ -187,7 +187,7 @@ namespace Infinity
 					if (!key_pressed)
 					{
 						buttons[(unsigned int)entry.value] = false;
-						BaseApplication::GetApplication()->PushEvent(new MouseReleasedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new MouseReleasedEvent(entry.value));
 					}
 				}
 				else
@@ -195,7 +195,7 @@ namespace Infinity
 					if (key_pressed)
 					{
 						buttons[(unsigned int)entry.value] = true;
-						BaseApplication::GetApplication()->PushEvent(new MousePressedEvent(entry.value, nullptr));
+						BaseApplication::GetApplication()->PushEvent(new MousePressedEvent(entry.value));
 					}
 				}
 			}

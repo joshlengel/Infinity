@@ -8,6 +8,8 @@
 #include"utils/data/String.h"
 #endif // DEBUG
 
+#include"utils/data/Resource.h"
+
 #include"window/Window.h"
 
 namespace Infinity
@@ -33,24 +35,20 @@ namespace Infinity
 		String m_debug_name;
 #endif // DEBUG
 
-		void *m_caller;
-
 	public:
 #ifdef DEBUG
-		Event(EventType type, const String &debug_name, void *caller);
-		Event(EventType type, String &&debug_name, void *caller);
+		Event(EventType type, const String &debug_name);
+		Event(EventType type, String &&debug_name);
 
 		const String &GetDebugName() const;
 #else
-		Event(EventType type, void *caller);
+		Event(EventType type);
 #endif // DEBUG
 		virtual ~Event();
 
 		EventType GetType() const;
 		void Consume();
 		bool IsConsumed() const;
-
-		void *GetCaller() const;
 	};
 
 	// Window events
@@ -58,11 +56,14 @@ namespace Infinity
 	class INFINITY_API WindowResizedEvent : public Event
 	{
 	private:
+		Resource<Window> m_window;
 		unsigned int m_width, m_height;
 
 	public:
-		WindowResizedEvent(unsigned int width, unsigned int height, void *caller);
+		WindowResizedEvent(unsigned int width, unsigned int height, Resource<Window> window);
 		~WindowResizedEvent();
+
+		Resource<Window> GetWindow() const;
 
 		unsigned int GetWidth() const;
 		unsigned int GetHeight() const;
@@ -70,8 +71,13 @@ namespace Infinity
 
 	class INFINITY_API WindowClosedEvent : public Event
 	{
+	private:
+		Resource<Window> m_window;
+
 	public:
-		WindowClosedEvent(void *caller);
+		WindowClosedEvent(Resource<Window> window);
+
+		Resource<Window> GetWindow() const;
 		~WindowClosedEvent();
 	};
 
@@ -83,7 +89,7 @@ namespace Infinity
 		Window::MainWindowParams m_params;
 
 	public:
-		ApplicationEnteredEvent(void *caller);
+		ApplicationEnteredEvent();
 		~ApplicationEnteredEvent();
 
 		Window::MainWindowParams &GetMainWindowParams();
@@ -92,7 +98,7 @@ namespace Infinity
 	class INFINITY_API ApplicationExitedEvent : public Event
 	{
 	public:
-		ApplicationExitedEvent(void *caller);
+		ApplicationExitedEvent();
 		~ApplicationExitedEvent();
 	};
 
@@ -101,7 +107,7 @@ namespace Infinity
 	class INFINITY_API UserCreateEvent : public Event
 	{
 	public:
-		UserCreateEvent(void *caller);
+		UserCreateEvent();
 		~UserCreateEvent();
 	};
 
@@ -111,7 +117,7 @@ namespace Infinity
 		double m_dt;
 
 	public:
-		UserUpdateEvent(double dt, void *caller);
+		UserUpdateEvent(double dt);
 		~UserUpdateEvent();
 
 		double GetDT() const;
@@ -120,14 +126,14 @@ namespace Infinity
 	class INFINITY_API UserRenderEvent : public Event
 	{
 	public:
-		UserRenderEvent(void *caller);
+		UserRenderEvent();
 		~UserRenderEvent();
 	};
 
 	class INFINITY_API UserDestroyEvent : public Event
 	{
 	public:
-		UserDestroyEvent(void *caller);
+		UserDestroyEvent();
 		~UserDestroyEvent();
 	};
 
@@ -139,7 +145,7 @@ namespace Infinity
 		KeyCode m_key;
 
 	public:
-		KeyPressedEvent(KeyCode key, void *caller);
+		KeyPressedEvent(KeyCode key);
 		~KeyPressedEvent();
 
 		KeyCode GetKey() const;
@@ -151,7 +157,7 @@ namespace Infinity
 		KeyCode m_key;
 
 	public:
-		KeyReleasedEvent(KeyCode key, void *caller);
+		KeyReleasedEvent(KeyCode key);
 		~KeyReleasedEvent();
 
 		KeyCode GetKey() const;
@@ -165,7 +171,7 @@ namespace Infinity
 		MouseCode m_button;
 
 	public:
-		MousePressedEvent(MouseCode button, void *caller);
+		MousePressedEvent(MouseCode button);
 		~MousePressedEvent();
 
 		MouseCode GetButton() const;
@@ -177,7 +183,7 @@ namespace Infinity
 		MouseCode m_button;
 
 	public:
-		MouseReleasedEvent(MouseCode button, void *caller);
+		MouseReleasedEvent(MouseCode button);
 		~MouseReleasedEvent();
 
 		MouseCode GetButton() const;
@@ -187,26 +193,40 @@ namespace Infinity
 
 	class INFINITY_API CursorEnteredEvent : public Event
 	{
+	private:
+		Resource<Window> m_window;
+
 	public:
-		CursorEnteredEvent(void *caller);
+		CursorEnteredEvent(Resource<Window> window);
 		~CursorEnteredEvent();
+
+		Resource<Window> GetWindow() const;
 	};
 
 	class INFINITY_API CursorExitedEvent : public Event
 	{
+	private:
+		Resource<Window> m_window;
+
 	public:
-		CursorExitedEvent(void *caller);
+		CursorExitedEvent(Resource<Window> window);
 		~CursorExitedEvent();
+
+		Resource<Window> GetWindow() const;
 	};
 
 	class INFINITY_API CursorMovedEvent : public Event
 	{
 	private:
+		Resource<Window> m_window;
+
 		int m_cx, m_cy;
 
 	public:
-		CursorMovedEvent(int cx, int cy, void *caller);
+		CursorMovedEvent(int cx, int cy, Resource<Window> window);
 		~CursorMovedEvent();
+
+		Resource<Window> GetWindow() const;
 
 		int GetCX() const;
 		int GetCY() const;

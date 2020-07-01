@@ -38,36 +38,6 @@ namespace Infinity
 			m_entries(std::move(map.m_entries))
 		{}
 
-		bool ContainsKey(const Key &key) const
-		{
-			for (const Entry &e : m_entries)
-			{
-				if (e.key == key) return true;
-			}
-
-			return false;
-		}
-
-		const Entry *Find(const Key &key) const
-		{
-			for (const Entry &e : m_entries)
-			{
-				if (e.key == key) return &e;
-			}
-
-			return end();
-		}
-
-		Entry *Find(const Key &key)
-		{
-			for (Entry &e : m_entries)
-			{
-				if (e.key == key) return &e;
-			}
-
-			return end();
-		}
-
 		Value &operator[](const Key &key)
 		{
 			for (Entry &e : m_entries)
@@ -82,25 +52,28 @@ namespace Infinity
 			return m_entries[m_entries.GetSize() - 1].value;
 		}
 
+		Value &operator[](Key &&key)
+		{
+			for (Entry &e : m_entries)
+			{
+				if (e.key == key) return e.value;
+			}
+
+			Entry n { std::forward<Key>(key) };
+
+			m_entries.Add(std::move(n));
+
+			return m_entries[m_entries.GetSize() - 1].value;
+		}
+
 		void Clear()
 		{
 			m_entries.Clear();
 		}
 
-		void Remove(const Key &key)
+		void Remove(Entry *itr)
 		{
-			auto itr = begin();
-
-			for (unsigned int index = 0; index < m_entries.GetSize(); ++index)
-			{
-				if (key == itr->key)
-				{
-					m_entries.Remove(index);
-					return;
-				}
-
-				++itr;
-			}
+			m_entries.Remove(itr);
 		}
 
 		const Entry *begin() const { return m_entries.begin(); }
@@ -108,4 +81,54 @@ namespace Infinity
 		Entry *begin() { return m_entries.begin(); }
 		Entry *end() { return m_entries.end(); }
 	};
+
+	template <typename Key, typename Value>
+	inline bool INFINITY_API ContainsKey(const Map<Key, Value> &map, const Key &key)
+	{
+		for (const typename Map<Key, Value>::Entry &e : map)
+		{
+			if (e.key == key) return true;
+		}
+
+		return false;
+	}
+
+	template <typename Key, typename Value>
+	inline bool INFINITY_API ContainsValue(const Map<Key, Value> &map, const Value &value)
+	{
+		for (const typename Map<Key, Value>::Entry &e : map)
+		{
+			if (e.value == value) return true;
+		}
+
+		return false;
+	}
+
+	template <typename Key, typename Value>
+	inline const typename Map<Key, Value>::Entry INFINITY_API *Find(const Map<Key, Value> &map, const Key &key)
+	{
+		for (const Map<Key, Value>::Entry &e : map)
+		{
+			if (e.key == key) return &e;
+		}
+
+		return map.end();
+	}
+
+	template <typename Key, typename Value>
+	inline typename Map<Key, Value>::Entry INFINITY_API *Find(Map<Key, Value> &map, const Key &key)
+	{
+		for (typename Map<Key, Value>::Entry &e : map)
+		{
+			if (e.key == key) return &e;
+		}
+
+		return map.end();
+	}
+
+	template <typename Key, typename Value>
+	inline void INFINITY_API Remove(Map<Key, Value> &map, const Key &key)
+	{
+		map.Remove(Find(map, key));
+	}
 }

@@ -36,20 +36,6 @@ namespace Infinity
 		return true;
 	}
 
-	void WindowsContext::Destroy()
-	{
-		if (m_def_rasterizer)
-		{
-			m_def_rasterizer->Destroy();
-			m_def_rasterizer = nullptr;
-		}
-
-		m_device = nullptr;
-		m_device_context = nullptr;
-		m_render_target_view = nullptr;
-		m_depth_stencil_view = nullptr;
-	}
-
 	bool WindowsContext::Resize(ID3D11RenderTargetView *render_target_view, ID3D11DepthStencilView *depth_stencil_view, unsigned int width, unsigned int height)
 	{
 		m_render_target_view = render_target_view;

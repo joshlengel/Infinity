@@ -11,7 +11,7 @@ struct ID3DDepthStencilView;
 
 namespace Infinity
 {
-	class INFINITY_API WindowsContext : public Context
+	class WindowsContext : public Context
 	{
 	private:
 		ID3D11Device *m_device;
@@ -26,7 +26,6 @@ namespace Infinity
 		~WindowsContext();
 
 		bool Init() override;
-		void Destroy() override;
 
 		bool Resize(ID3D11RenderTargetView *render_target_view, ID3D11DepthStencilView *depth_stencil_view, unsigned int width, unsigned int height);
 

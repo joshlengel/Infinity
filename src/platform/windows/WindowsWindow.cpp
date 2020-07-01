@@ -31,9 +31,9 @@ static int refresh_rate_denominator = 0;
 
 namespace Infinity
 {
-	WindowIcon *WindowIcon::CreateWindowIcon()
+	Resource<WindowIcon> WindowIcon::CreateWindowIcon()
 	{
-		return new WindowsWindowIcon;
+		return ResourceCast<WindowIcon>(MakeResource<WindowsWindowIcon>());
 	}
 
 	WindowsWindowIcon::WindowsWindowIcon():
@@ -42,22 +42,19 @@ namespace Infinity
 	{}
 
 	WindowsWindowIcon::~WindowsWindowIcon()
-	{}
-
-	bool WindowsWindowIcon::Init(const char *file_path)
 	{
-		m_big_icon_handle = (HICON)LoadImageA(nullptr, file_path, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
-		m_small_icon_handle = (HICON)LoadImageA(nullptr, file_path, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
+		DestroyIcon(m_big_icon_handle);
+		DestroyIcon(m_small_icon_handle);
+	}
+
+	bool WindowsWindowIcon::Init(const String &file_path)
+	{
+		m_big_icon_handle = (HICON)LoadImageA(nullptr, &file_path[0], IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+		m_small_icon_handle = (HICON)LoadImageA(nullptr, &file_path[0], IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
 
 		if (!m_big_icon_handle || !m_small_icon_handle) return false;
 
 		return true;
-	}
-
-	void WindowsWindowIcon::Destroy()
-	{
-		DestroyIcon(m_big_icon_handle);
-		DestroyIcon(m_small_icon_handle);
 	}
 
 	HICON WindowsWindowIcon::GetBigHICON() const { return m_big_icon_handle; }
@@ -124,9 +121,9 @@ namespace Infinity
 		return true;
 	}
 
-	BaseWindow *BaseWindow::CreateBaseWindow()
+	Resource<BaseWindow> BaseWindow::CreateBaseWindow()
 	{
-		return new WindowsWindow;
+		return ResourceCast<BaseWindow>(MakeResource<WindowsWindow>());
 	}
 
 	WindowsWindow::WindowsWindow():
@@ -171,6 +168,45 @@ namespace Infinity
 
 	WindowsWindow::~WindowsWindow()
 	{
+		if (s_context == m_context) s_context = nullptr;
+
+		if (m_render_target_view)
+		{
+			m_render_target_view->Release();
+		}
+
+		if (m_depth_stencil_buffer)
+		{
+			m_depth_stencil_buffer->Release();
+		}
+
+		if (m_depth_stencil_state)
+		{
+			m_depth_stencil_state->Release();
+		}
+
+		if (m_depth_stencil_view)
+		{
+			m_depth_stencil_view->Release();
+		}
+
+		if (m_swap_chain)
+		{
+			m_swap_chain->SetFullscreenState(false, nullptr);
+
+			m_swap_chain->Release();
+		}
+
+		if (m_device)
+		{
+			m_device->Release();
+		}
+
+		if (m_device_context)
+		{
+			m_device_context->Release();
+		}
+
 		if (m_raw_input_data)
 		{
 			free(m_raw_input_data);
@@ -211,7 +247,7 @@ namespace Infinity
 
 		if (params.parent)
 		{
-			parent_window = ((WindowsWindow*)params.parent)->m_window_handle;
+			parent_window = ResourceCast<WindowsWindow>(params.parent)->m_window_handle;
 		}
 
 		RECT rect;
@@ -222,7 +258,7 @@ namespace Infinity
 
 		AdjustWindowRectEx(&rect, m_style, false, m_style_ex);
 
-		m_window_handle = CreateWindowExA(m_style_ex, CLASS_NAME, params.title, m_style,
+		m_window_handle = CreateWindowExA(m_style_ex, CLASS_NAME, &params.title[0], m_style,
 			x == CW_USEDEFAULT? CW_USEDEFAULT : x + rect.left,
 			y == CW_USEDEFAULT? CW_USEDEFAULT : y + rect.top,
 			width == CW_USEDEFAULT? CW_USEDEFAULT : rect.right - rect.left,
@@ -360,9 +396,9 @@ namespace Infinity
 		device_adapter->Release();
 		device_dxgi->Release();
 
-		m_context = new WindowsContext(m_device, m_device_context);
+		m_context = ResourceCast<Context>(MakeResource<WindowsContext>(m_device, m_device_context));
 
-		Context *restore_context = s_context;
+		Resource<Context> restore_context = s_context;
 		s_context = m_context;
 
 		if (!m_context->Init())
@@ -381,70 +417,15 @@ namespace Infinity
 
 		if (params.icon)
 		{
-			WindowsWindowIcon *icon = (WindowsWindowIcon*)params.icon;
+			Resource<WindowsWindowIcon> icon = ResourceCast<WindowsWindowIcon>(params.icon);
 			SendMessageA(m_window_handle, WM_SETICON, ICON_SMALL, (LPARAM)icon->GetSmallHICON());
 			SendMessageA(m_window_handle, WM_SETICON, ICON_BIG, (LPARAM)icon->GetBigHICON());
 		}
 
 		BaseApplication::GetApplication()->AddPriorityEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(WindowsWindow::EventHandler));
-		BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(m_width, m_height, this));
+		BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(m_width, m_height, GetBaseResource()));
 
 		return true;
-	}
-
-	void WindowsWindow::Destroy()
-	{
-		if (s_context == m_context) s_context = nullptr;
-
-		if (m_context)
-		{
-			m_context->Destroy();
-			delete m_context;
-		}
-
-		if (m_render_target_view)
-		{
-			m_render_target_view->Release();
-			m_render_target_view = nullptr;
-		}
-
-		if (m_depth_stencil_buffer)
-		{
-			m_depth_stencil_buffer->Release();
-			m_depth_stencil_buffer = nullptr;
-		}
-
-		if (m_depth_stencil_state)
-		{
-			m_depth_stencil_state->Release();
-			m_depth_stencil_state = nullptr;
-		}
-
-		if (m_depth_stencil_view)
-		{
-			m_depth_stencil_view->Release();
-			m_depth_stencil_view = nullptr;
-		}
-
-		if (m_swap_chain)
-		{
-			m_swap_chain->SetFullscreenState(false, nullptr);
-
-			m_swap_chain->Release();
-			m_swap_chain = nullptr;
-		}
-
-		if (m_device)
-		{
-			m_device->Release();
-			m_device = nullptr;
-		}
-
-		if (m_device_context)
-		{
-			m_device_context->Release();
-			m_device_context = nullptr;
-		}
 	}
 
 	void WindowsWindow::Show()
@@ -604,6 +585,8 @@ namespace Infinity
 	unsigned int WindowsWindow::GetWidth() const { return m_width; }
 	unsigned int WindowsWindow::GetHeight() const { return m_height; }
 
+	Resource<Window> WindowsWindow::GetBaseResource() const { return ResourceCast<Window>(GetResourceFromThis()); }
+
 	bool WindowsWindow::Resize()
 	{
 		if (m_width != m_prev_width || m_height != m_prev_height)
@@ -691,7 +674,7 @@ namespace Infinity
 				return false;
 			}
 			
-			WindowsContext *win_con = (WindowsContext*)m_context;
+			Resource<WindowsContext> win_con = ResourceCast<WindowsContext>(m_context);
 
 			if (win_con)
 			{
@@ -716,21 +699,27 @@ namespace Infinity
 		return false;
 	}
 
-	void WindowsWindow::EventHandler(Event *event)
+	void WindowsWindow::EventHandler(Event &event)
 	{
-		if (event->GetCaller() != this) return;
-
-		switch (event->GetType())
+		switch (event.GetType())
 		{
 		case Event::EventType::WindowResized:
 		{
+			WindowResizedEvent &wre = (WindowResizedEvent&)event;
+
+			if (wre.GetWindow().Get() != this) return;
+
 			if (!Resize())
-				event->Consume();
+				event.Consume();
 
 			break;
 		}
 		case Event::EventType::WindowClosed:
 		{
+			WindowClosedEvent &wre = (WindowClosedEvent&)event;
+
+			if (wre.GetWindow().Get() != this) return;
+
 			m_should_close = true;
 			DestroyWindow(m_window_handle);
 			break;
@@ -799,27 +788,27 @@ namespace Infinity
 
 	void WindowsWindow::HotKeyHandler()
 	{
-		WindowsWindow *window = (WindowsWindow*)BaseApplication::GetApplication()->GetWindowSystem().GetMainWindow();
+		Resource<WindowsWindow> window = ResourceCast<WindowsWindow>(BaseApplication::GetApplication()->GetWindowSystem().GetMainWindow());
 		window->m_fullscreen = !window->m_fullscreen;
 
 		if (window->m_fullscreen)
 		{
-			for (Window *window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
+			for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
 			{
-				ShowWindow(((WindowsWindow*)window)->m_window_handle, SW_HIDE);
+				ShowWindow(ResourceCast<WindowsWindow>(window)->m_window_handle, SW_HIDE);
 			}
 
 			window->EnterFullscreenMode();
 
-			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
 		}
 		else
 		{
 			window->ExitFullscreenMode();
 
-			for (Window *window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
+			for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
 			{
-				WindowsWindow *wwin = (WindowsWindow*)window;
+				Resource<WindowsWindow> wwin = ResourceCast<WindowsWindow>(window);
 
 				if (wwin->m_showing)
 				{
@@ -827,7 +816,7 @@ namespace Infinity
 				}
 			}
 
-			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
 		}
 	}
 
@@ -852,7 +841,7 @@ namespace Infinity
 			if (window->m_minimized && (window->m_width != 0 || window->m_height != 0))
 			{
 				window->m_minimized = false;
-				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window->GetBaseResource()));
 				return 0;
 			}
 
@@ -862,7 +851,7 @@ namespace Infinity
 				window->m_minimized = true;
 
 			case SIZE_MAXIMIZED:
-				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window->GetBaseResource()));
 				break;
 			}
 
@@ -870,7 +859,7 @@ namespace Infinity
 		}
 		case WM_EXITSIZEMOVE:
 		{
-			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window));
+			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, window->GetBaseResource()));
 			return 0;
 		}
 		case WM_MOUSEMOVE:
@@ -889,10 +878,10 @@ namespace Infinity
 					TrackMouseEvent(&tme);
 
 					window->m_cursor_active = true;
-					BaseApplication::GetApplication()->PushEvent(new CursorEnteredEvent(window));
+					BaseApplication::GetApplication()->PushEvent(new CursorEnteredEvent(window->GetBaseResource()));
 				}
 
-				BaseApplication::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
+				BaseApplication::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window->GetBaseResource()));
 			}
 
 			return 0;
@@ -902,13 +891,13 @@ namespace Infinity
 			if (window->m_cursor_active)
 			{
 				window->m_cursor_active = false;
-				BaseApplication::GetApplication()->PushEvent(new CursorExitedEvent(window));
+				BaseApplication::GetApplication()->PushEvent(new CursorExitedEvent(window->GetBaseResource()));
 			}
 
 			return 0;
 		}
 		case WM_CLOSE:
-			BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window));
+			BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window->GetBaseResource()));
 			return 0;
 
 		case WM_INPUT:
@@ -951,7 +940,7 @@ namespace Infinity
 				window->m_cursor_x += cx;
 				window->m_cursor_y += cy;
 
-				BaseApplication::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window));
+				BaseApplication::GetApplication()->PushEvent(new CursorMovedEvent(window->m_cursor_x, window->m_cursor_y, window->GetBaseResource()));
 			}
 
 			return 0;

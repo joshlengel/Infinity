@@ -13,7 +13,11 @@
 
 #include"Core.h"
 #include"window/BaseWindow.h"
+
+#include"event/Event.h"
 #include"event/InputCodes.h"
+
+#include"WindowsContext.h"
 
 struct IDXGISwapChain;
 struct ID3D11Device;
@@ -25,10 +29,7 @@ struct ID3D11Texture2D;
 
 namespace Infinity
 {
-	class WindowsContext;
-	class Event;
-
-	class INFINITY_API WindowsWindowIcon : public WindowIcon
+	class WindowsWindowIcon : public WindowIcon
 	{
 	private:
 		HICON m_big_icon_handle;
@@ -38,14 +39,13 @@ namespace Infinity
 		WindowsWindowIcon();
 		~WindowsWindowIcon();
 
-		bool Init(const char *file_path) override;
-		void Destroy() override;
+		bool Init(const String &file_path) override;
 
 		HICON GetBigHICON() const;
 		HICON GetSmallHICON() const;
 	};
 
-	class INFINITY_API WindowsWindow : public BaseWindow
+	class WindowsWindow : public BaseWindow, public ResourceFromThis<WindowsWindow>
 	{
 	private:
 		HWND m_window_handle;
@@ -81,7 +81,6 @@ namespace Infinity
 		~WindowsWindow();
 
 		bool Init(const BaseWindowParams &params) override;
-		void Destroy() override;
 
 		void Show() override;
 		void Hide() override;
@@ -102,12 +101,14 @@ namespace Infinity
 		int GetCursorPosX() const override;
 		int GetCursorPosY() const override;
 
-		void EventHandler(Event *event);
+		void EventHandler(Event &event);
 
 		static void HotKeyHandler();
 		static LRESULT CALLBACK WindowProcedure(HWND window_handle, UINT message, WPARAM w_param, LPARAM l_param);
 
 	private:
+		Resource<Window> GetBaseResource() const;
+		
 		bool Resize();
 		
 		void UpdateClipRect();

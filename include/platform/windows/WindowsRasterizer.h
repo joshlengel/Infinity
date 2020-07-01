@@ -11,7 +11,7 @@ struct ID3D11BlendState;
 
 namespace Infinity
 {
-	class INFINITY_API WindowsRasterizer : public Rasterizer
+	class WindowsRasterizer : public Rasterizer
 	{
 	private:
 		ID3D11RasterizerState *m_raster_state;
@@ -22,7 +22,6 @@ namespace Infinity
 		~WindowsRasterizer();
 
 		bool Init(CullMode cull, bool blend) override;
-		void Destroy() override;
 
 		void Bind() override;
 	};

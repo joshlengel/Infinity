@@ -2,6 +2,8 @@
 
 #include"Core.h"
 
+#include"utils/data/Resource.h"
+
 namespace Infinity
 {
 	class INFINITY_API Rasterizer
@@ -15,14 +17,14 @@ namespace Infinity
 		};
 
 	public:
-		Rasterizer();
-		virtual ~Rasterizer();
+		virtual ~Rasterizer() {}
 
 		virtual bool Init(CullMode cull = CullMode::NONE, bool blend = false) = 0;
-		virtual void Destroy() = 0;
-
+		
 		virtual void Bind() = 0;
 
-		static Rasterizer *CreateRasterizer();
+		static Resource<Rasterizer> CreateRasterizer();
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API Resource<Rasterizer>;
 }

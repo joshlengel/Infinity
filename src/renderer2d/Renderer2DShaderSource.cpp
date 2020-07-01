@@ -1,6 +1,6 @@
 #include"InfinityPCH.h"
 
-constexpr static const char renderer2D_batched_v_source[] = R"(
+static const Infinity::String renderer2D_batched_v_source = R"(
 cbuffer Constants
 {
 	matrix projection_view;
@@ -32,7 +32,7 @@ VertexOut main(VertexIn input)
 }
 )";
 
-constexpr static const char renderer2D_unbatched_v_source[] = R"(
+static const Infinity::String renderer2D_unbatched_v_source = R"(
 cbuffer Constants
 {
 	matrix model;
@@ -67,7 +67,7 @@ VertexOut main(VertexIn input)
 }
 )";
 
-constexpr static const char renderer2D_p_source[] = R"(
+static const Infinity::String renderer2D_p_source = R"(
 Texture2D tex;
 SamplerState texSampler;
 

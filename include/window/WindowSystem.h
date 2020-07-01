@@ -3,17 +3,19 @@
 #include"Core.h"
 
 #include"Window.h"
+
+#include"event/Event.h"
+
 #include"utils/data/ArrayList.h"
+#include"utils/data/Resource.h"
 
 namespace Infinity
 {
-	class Event;
-
 	class INFINITY_API WindowSystem
 	{
 	private:
-		Window *m_main_window;
-		mutable ArrayList<Window*> m_child_windows;
+		Resource<Window> m_main_window;
+		mutable ArrayList<Resource<Window>> m_child_windows;
 
 	public:
 		WindowSystem();
@@ -21,13 +23,13 @@ namespace Infinity
 
 		bool InitMainWindow(const Window::MainWindowParams &params);
 
-		Window *GetMainWindow() const;
-		const ArrayList<Window*> &GetChildWindows() const;
+		Resource<Window> GetMainWindow() const;
+		const ArrayList<Resource<Window>> &GetChildWindows() const;
 
-		Window *CreateChildWindow(const Window::ChildWindowParams &params) const;
-		void DestroyChildWindow(Window *window) const;
+		Resource<Window> CreateChildWindow(const Window::ChildWindowParams &params) const;
+		void DestroyChildWindow(Resource<Window> window) const;
 
 	private:
-		void EventHandler(Event *event);
+		void EventHandler(Event &event);
 	};
 }

@@ -2,20 +2,19 @@
 
 #include"Core.h"
 
-#include"utils\Camera.h"
-#include"utils\math\Math.h"
+#include"Model.h"
+#include"Shader.h"
+#include"Texture.h"
+
+#include"utils/Camera.h"
+#include"utils/math/Math.h"
 
 #include"utils/data/ArrayList.h"
 #include"utils/data/Map.h"
+#include"utils/data/Resource.h"
 
 namespace Infinity
 {
-	class VertexBuffer;
-	class IndexBuffer;
-	class Model;
-	class Shader;
-	class Texture2D;
-
 	class INFINITY_API Renderer2D
 	{
 	public:
@@ -29,7 +28,7 @@ namespace Infinity
 
 			bool batched = false;
 
-			const Texture2D *texture = nullptr;
+			Resource<Texture2D> texture = nullptr;
 		};
 
 	private:
@@ -44,13 +43,10 @@ namespace Infinity
 
 		struct RenderModel
 		{
-			VertexBuffer *v_buff;
-			IndexBuffer *i_buff;
-			Model *model;
-			Shader *shader;
-
-			~RenderModel();
-			void Destroy();
+			Resource<VertexBuffer> v_buff;
+			Resource<IndexBuffer> i_buff;
+			Resource<Model> model;
+			Resource<Shader> shader;
 		};
 
 		RenderModel m_batched, m_unbatched;
@@ -62,7 +58,7 @@ namespace Infinity
 
 		bool m_error;
 
-		Texture2D *m_def_texture;
+		Resource<Texture2D> m_def_texture;
 
 		const static unsigned int MAX_QUADS = 300;
 		const static unsigned int MAX_VERTICES = MAX_QUADS * 4;
@@ -76,20 +72,19 @@ namespace Infinity
 			unsigned int index_count = 0;
 		};
 
-		Map<const Texture2D*, Batch*> m_batches;
+		Map<Resource<Texture2D>, Batch*> m_batches;
 
 	public:
 		Renderer2D();
 		~Renderer2D();
 
 		bool Init();
-		void Destroy();
 
 		void StartScene(const Camera *camera);
 		void DrawQuad(const QuadParams &quad);
 		void EndScene();
 
 	private:
-		void Flush(const Texture2D *texture, Batch *batch);
+		void Flush(Resource<Texture2D> texture, Batch *batch);
 	};
 }

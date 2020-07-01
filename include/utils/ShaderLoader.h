@@ -2,30 +2,31 @@
 
 #include"Core.h"
 
+#include"Shader.h"
+#include"VertexLayout.h"
+
 #include"utils/data/Map.h"
 #include"utils/data/String.h"
+#include"utils/data/Resource.h"
 
 namespace Infinity
 {
-	class Shader;
-	class VertexLayout;
-
 	class INFINITY_API ShaderLoader
 	{
 	private:
-		Map<StaticString, Shader*> m_shaders;
+		Map<String, Resource<Shader>> m_shaders;
 
 	public:
 		ShaderLoader();
 		~ShaderLoader();
 
-		void Destroy();
+		Resource<Shader> Load(const String &name, const String &vertex_file, const String &pixel_file, const VertexLayout &layout);
+		Resource<Shader> Load(String &&name, const String &vertex_file, const String &pixel_file, const VertexLayout &layout);
+		Resource<Shader> Load(const String &name, const String &vertex_file, const String &pixel_file, VertexLayout &&layout);
+		Resource<Shader> Load(String &&name, const String &vertex_file, const String &pixel_file, VertexLayout &&layout);
 
-		Shader *Load(StaticString name, const char *vertex_file, const char *pixel_file, const VertexLayout &layout);
-		Shader *Load(StaticString name, const char *vertex_file, const char *pixel_file, VertexLayout &&layout);
+		Resource<Shader> Get(const String &name);
 
-		Shader *Get(StaticString name);
-
-		void Destroy(StaticString name);
+		void Remove(const String &name);
 	};
 }

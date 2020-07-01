@@ -12,21 +12,6 @@
 
 namespace Infinity
 {
-	Renderer2D::RenderModel::~RenderModel()
-	{
-		delete v_buff;
-		delete i_buff;
-		delete model;
-		delete shader;
-	}
-
-	void Renderer2D::RenderModel::Destroy()
-	{
-		if (v_buff) v_buff->Destroy();
-		if (i_buff) i_buff->Destroy();
-		if (shader) shader->Destroy();
-	}
-
 	Renderer2D::Renderer2D():
 		m_batched(),
 		m_unbatched(),
@@ -49,21 +34,19 @@ namespace Infinity
 		{
 			delete entry.value;
 		}
-
-		delete m_def_texture;
 	}
 
 	bool Renderer2D::Init()
 	{
 		m_batched.v_buff = VertexBuffer::CreateVertexBuffer({
-			{ "position",   DataType::FLOAT2 },
-			{ "color",      DataType::FLOAT4 },
-			{ "tex_coords", DataType::FLOAT2 }
+			{ String("position"),   DataType::FLOAT2 },
+			{ String("color"),      DataType::FLOAT4 },
+			{ String("tex_coords"), DataType::FLOAT2 }
 		});
 
 		m_unbatched.v_buff = VertexBuffer::CreateVertexBuffer({
-			{ "vertex",     DataType::FLOAT2 },
-			{ "tex_coords", DataType::FLOAT2 }
+			{ String("vertex"),     DataType::FLOAT2 },
+			{ String("tex_coords"), DataType::FLOAT2 }
 		});
 
 		if (!m_batched.v_buff->Init(true) || !m_unbatched.v_buff->Init(false))
@@ -139,18 +122,18 @@ namespace Infinity
 		m_unbatched.model->SetIndexBuffer(m_unbatched.i_buff);
 
 		m_batched.shader = Shader::CreateShader({
-			{ "position",   DataType::FLOAT2, 0 },
-			{ "color",      DataType::FLOAT4, 0 },
-			{ "tex_coords", DataType::FLOAT2, 0 }
+			{ String("position"),   DataType::FLOAT2, 0 },
+			{ String("color"),      DataType::FLOAT4, 0 },
+			{ String("tex_coords"), DataType::FLOAT2, 0 }
 		});
 
 		m_unbatched.shader = Shader::CreateShader({
-			{ "vertex",     DataType::FLOAT2, 0 },
-			{ "tex_coords", DataType::FLOAT2, 0 }
+			{ String("vertex"),     DataType::FLOAT2, 0 },
+			{ String("tex_coords"), DataType::FLOAT2, 0 }
 		});
 
-		if (!m_batched.shader->Init(renderer2D_batched_v_source, sizeof(renderer2D_batched_v_source), renderer2D_p_source, sizeof(renderer2D_p_source))
-			|| !m_unbatched.shader->Init(renderer2D_unbatched_v_source, sizeof(renderer2D_unbatched_v_source), renderer2D_p_source, sizeof(renderer2D_p_source)))
+		if (!m_batched.shader->Init(renderer2D_batched_v_source, renderer2D_p_source)
+			|| !m_unbatched.shader->Init(renderer2D_unbatched_v_source, renderer2D_p_source))
 		{
 			INFINITY_CORE_ERROR("Error initializing Renderer2D shader");
 			m_error = true;
@@ -158,11 +141,11 @@ namespace Infinity
 		}
 
 		if (!m_batched.shader->DeclareConstants({
-				{ "projection_view", DataType::MAT4 }
+				{ String("projection_view"), DataType::MAT4 }
 			}) || !m_unbatched.shader->DeclareConstants({
-				{ "model",           DataType::MAT4   },
-				{ "projection_view", DataType::MAT4   },
-				{ "color",           DataType::FLOAT4 }
+				{ String("model"),           DataType::MAT4   },
+				{ String("projection_view"), DataType::MAT4   },
+				{ String("color"),           DataType::FLOAT4 }
 			}))
 		{
 			INFINITY_CORE_ERROR("Error declaring Renderer2D shader constants");
@@ -187,17 +170,6 @@ namespace Infinity
 		}
 
 		return true;
-	}
-
-	void Renderer2D::Destroy()
-	{
-		if (m_def_texture)
-		{
-			m_def_texture->Destroy();
-		}
-
-		m_batched.Destroy();
-		m_unbatched.Destroy();
 	}
 
 	void Renderer2D::StartScene(const Camera *camera)
@@ -233,7 +205,7 @@ namespace Infinity
 
 	void Renderer2D::DrawQuad(const QuadParams &quad)
 	{
-		const Texture2D *texture = quad.texture;
+		Resource<Texture2D> texture = quad.texture;
 
 		if (!texture) texture = m_def_texture;
 
@@ -338,7 +310,7 @@ namespace Infinity
 		}
 	}
 
-	void Renderer2D::Flush(const Texture2D *texture, Batch *batch)
+	void Renderer2D::Flush(Resource<Texture2D> texture, Batch *batch)
 	{
 		texture->Bind(0);
 

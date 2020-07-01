@@ -219,7 +219,7 @@
     <ClInclude Include="include\utils\ModelLoader.h" />
     <ClInclude Include="include\utils\data\ArrayList.h" />
     <ClInclude Include="include\utils\data\Map.h" />
-    <ClInclude Include="include\utils\data\Pointer.h" />
+    <ClInclude Include="include\utils\data\Resource.h" />
     <ClInclude Include="include\utils\data\Queue.h" />
     <ClInclude Include="include\utils\data\String.h" />
     <ClInclude Include="include\utils\math\Math.h" />
@@ -232,7 +232,6 @@
   <ItemGroup>
     <ClCompile Include="src\application\Application.cpp" />
     <ClCompile Include="src\application\BaseApplication.cpp" />
-    <ClCompile Include="src\Context.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\InfinityPCH.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -240,12 +239,9 @@
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\platform\windows\WindowsInput.cpp" />
-    <ClCompile Include="src\Rasterizer.cpp" />
     <ClCompile Include="src\renderer2d\Renderer2DShaderSource.cpp" />
     <ClCompile Include="src\Shader.cpp" />
-    <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Type.cpp" />
-    <ClCompile Include="src\utils\data\String.cpp" />
     <ClCompile Include="src\utils\ShaderLoader.cpp" />
     <ClCompile Include="src\VertexLayout.cpp" />
     <ClCompile Include="src\window\BaseWindow.cpp" />

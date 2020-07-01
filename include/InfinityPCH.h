@@ -2,7 +2,7 @@
 
 #include"utils/data/ArrayList.h"
 #include"utils/data/Map.h"
-#include"utils/data/Pointer.h"
+#include"utils/data/Resource.h"
 #include"utils/data/Queue.h"
 #include"utils/data/String.h"
 

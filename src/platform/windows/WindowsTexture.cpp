@@ -11,9 +11,9 @@
 
 namespace Infinity
 {
-	Texture2D *Texture2D::CreateTexture()
+	Resource<Texture2D> Texture2D::CreateTexture()
 	{
-		return new WindowsTexture2D;
+		return ResourceCast<Texture2D>(MakeResource<WindowsTexture2D>());
 	}
 
 	WindowsTexture2D::WindowsTexture2D():
@@ -25,13 +25,34 @@ namespace Infinity
 		m_sampler_state(nullptr)
 	{}
 
-	WindowsTexture2D::~WindowsTexture2D() {}
+	WindowsTexture2D::~WindowsTexture2D()
+	{
+		if (m_sampler_state)
+		{
+			m_sampler_state->Release();
+		}
 
-	bool WindowsTexture2D::Init(const char *filename, bool mipmap, float lod_bias)
+		if (m_shader_resource_view)
+		{
+			m_shader_resource_view->Release();
+		}
+
+		if (m_texture)
+		{
+			m_texture->Release();
+		}
+
+		if (m_pixels)
+		{
+			free(m_pixels); // must use free due to stbimage
+		}
+	}
+
+	bool WindowsTexture2D::Init(const String &filename, bool mipmap, float lod_bias)
 	{
 		int width, height, cif;
 
-		m_pixels = stbi_load(filename, &width, &height, &cif, STBI_rgb_alpha);
+		m_pixels = stbi_load(&filename[0], &width, &height, &cif, STBI_rgb_alpha);
 
 		m_width = (unsigned)width;
 		m_height = (unsigned)height;
@@ -51,36 +72,9 @@ namespace Infinity
 		return InitDirect3D(mipmap, lod_bias);
 	}
 
-	void WindowsTexture2D::Destroy()
-	{
-		if (m_sampler_state)
-		{
-			m_sampler_state->Release();
-			m_sampler_state = nullptr;
-		}
-
-		if (m_shader_resource_view)
-		{
-			m_shader_resource_view->Release();
-			m_shader_resource_view = nullptr;
-		}
-
-		if (m_texture)
-		{
-			m_texture->Release();
-			m_texture = nullptr;
-		}
-
-		if (m_pixels)
-		{
-			free(m_pixels); // must use free due to stbimage
-			m_pixels = nullptr;
-		}
-	}
-
 	bool WindowsTexture2D::InitDirect3D(bool mipmap, float load_bias)
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11Device *device = context->GetDevice();
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
@@ -145,7 +139,7 @@ namespace Infinity
 	
 	void WindowsTexture2D::Bind(unsigned int slot) const
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 

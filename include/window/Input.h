@@ -6,13 +6,13 @@
 
 namespace Infinity
 {
-	enum class InputDevice
+	enum class INFINITY_API InputDevice
 	{
 		Cursor,
 		Last
 	};
 
-	enum class InputDeviceState
+	enum class INFINITY_API InputDeviceState
 	{
 		CursorEnabled,
 		CursorDisabled
@@ -30,6 +30,6 @@ namespace Infinity
 		extern bool keys[(unsigned int)KeyCode::Last];
 		extern bool buttons[(unsigned int)MouseCode::Last];
 
-		void INFINITY_API Update();
+		void Update();
 	}
 }

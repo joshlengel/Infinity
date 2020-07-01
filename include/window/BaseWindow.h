@@ -2,16 +2,19 @@
 
 #include"Core.h"
 
+#include"Input.h"
+
+#include"Window.h"
+#include"Context.h"
+
 #include"event/InputCodes.h"
 
-#include"Input.h"
-#include"Window.h"
+#include"utils/data/Resource.h"
+#include"utils/data/String.h"
 
 namespace Infinity
 {
-	class Context;
-
-	class INFINITY_API BaseWindow : public Window
+	class BaseWindow : public Window
 	{
 	public:
 		enum class BaseWindowStyle
@@ -21,33 +24,33 @@ namespace Infinity
 			FullscreenWindow
 		};
 
-		struct INFINITY_API BaseWindowParams
+		struct BaseWindowParams
 		{
-			BaseWindow *parent;
-			BaseWindowStyle style;
+			Resource<BaseWindow> parent = nullptr;
+			BaseWindowStyle style = BaseWindowStyle::MainWindow;
 
-			const char *title;
+			String title = String();
 
-			unsigned int x;
-			unsigned int y;
-			unsigned int width;
-			unsigned int height;
+			unsigned int x = INFINITY_DONT_CARE;
+			unsigned int y = INFINITY_DONT_CARE;
+			unsigned int width = INFINITY_DONT_CARE;
+			unsigned int height = INFINITY_DONT_CARE;
 
-			bool vsync;
+			bool vsync = true;
 			
-			bool auto_swap_buffers;
+			bool auto_swap_buffers = true;
 
 			// These flags only have an effect on the main window
-			bool auto_show;
-			bool fullscreen;
-			bool enable_alt_enter_fullscreen;
+			bool auto_show = true;
+			bool fullscreen = false;
+			bool enable_alt_enter_fullscreen = false;
 
-			WindowIcon *icon;
+			Resource<WindowIcon> icon = nullptr;
 		};
 
 	protected:
 		bool m_auto_swap_buffers;
-		Context *m_context;
+		Resource<Context> m_context;
 		
 		InputDeviceState m_device_states[(unsigned int)InputDevice::Last];
 
@@ -59,7 +62,6 @@ namespace Infinity
 		static void PollInput();
 
 		virtual bool Init(const BaseWindowParams &params) = 0;
-		virtual void Destroy() = 0;
 
 		virtual void Show() override = 0;
 		virtual void Hide() override = 0;
@@ -85,6 +87,6 @@ namespace Infinity
 
 		bool AutoSwapBuffers() const;
 
-		static BaseWindow *CreateBaseWindow();
+		static Resource<BaseWindow> CreateBaseWindow();
 	};
 }

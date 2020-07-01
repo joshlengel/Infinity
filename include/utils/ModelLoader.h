@@ -2,42 +2,41 @@
 
 #include"Core.h"
 
+#include"Model.h"
+#include"VertexLayout.h"
+
 #include"utils/data/Map.h"
 #include"utils/data/String.h"
+#include"utils/data/Resource.h"
 
 namespace Infinity
 {
-	class VertexBuffer;
-	class IndexBuffer;
-	class Model;
-	class VertexLayout;
-
 	class INFINITY_API ModelLoader
 	{
 	private:
 		struct ModelAsset
 		{
-			VertexBuffer *v_buff;
-			IndexBuffer *i_buff;
-			Model *model;
+			Resource<VertexBuffer> v_buff;
+			Resource<IndexBuffer> i_buff;
+			Resource<Model> model;
 		};
 
-		Map<StaticString, ModelAsset> m_models;
+		Map<String, ModelAsset> m_models;
 
 	public:
 		ModelLoader();
 		~ModelLoader();
 
-		void Destroy();
+		Resource<Model> Load(const String &name, const String &filename, const VertexLayout &layout);
+		Resource<Model> Load(String &&name, const String &filename, const VertexLayout &layout);
+		Resource<Model> Load(const String &name, const String &filename, VertexLayout &&layout);
+		Resource<Model> Load(String &&name, const String &filename, VertexLayout &&layout);
 
-		Model *Load(StaticString name, const char *filename, const VertexLayout &layout);
-		Model *Load(StaticString name, const char *filename, VertexLayout &&layout);
+		Resource<Model> Get(const String &name);
 
-		Model *Get(StaticString name);
-
-		void Destroy(StaticString name);
+		void Remove(const String &name);
 
 	private:
-		void Load(const char *filename, Model *model, VertexBuffer *vertex_buffer, IndexBuffer *index_buffer);
+		void Load(const String &filename, Resource<Model> model, Resource<VertexBuffer> vertex_buffer, Resource<IndexBuffer> index_buffer);
 	};
 }

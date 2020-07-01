@@ -5,6 +5,7 @@
 #include"VertexLayout.h"
 
 #include"utils/data/String.h"
+#include"utils/data/Resource.h"
 
 namespace Infinity
 {
@@ -17,16 +18,15 @@ namespace Infinity
 	public:
 		Shader(const VertexLayout &layout);
 		Shader(VertexLayout &&layout);
-		virtual ~Shader();
+		virtual ~Shader() {}
 
-		virtual bool Init(const char *vertex_source, unsigned int vs_size, const char *pixel_source, unsigned int ps_size) = 0;
-		virtual void Destroy() = 0;
-
+		virtual bool Init(const String &vertex_source, const String &pixel_source) = 0;
+		
 		virtual bool DeclareConstants(const VertexLayout &layout) = 0;
 		virtual bool DeclareConstants(VertexLayout &&layout) = 0;
 
 		virtual int GetConstantLocation(const String &name) = 0;
-		
+
 		virtual bool MapConstants() = 0;
 		virtual void UnmapConstants() = 0;
 
@@ -46,8 +46,10 @@ namespace Infinity
 		virtual void SetConstantMat4(int location, const float *matrix, bool transpose) = 0;
 
 		virtual void Bind() = 0;
-
-		static Shader *CreateShader(const VertexLayout &layout);
-		static Shader *CreateShader(VertexLayout &&layout);
+		
+		static Resource<Shader> CreateShader(const VertexLayout &layout);
+		static Resource<Shader> CreateShader(VertexLayout &&layout);
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API Resource<Shader>;
 }

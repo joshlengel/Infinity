@@ -11,7 +11,7 @@ struct ID3D11SamplerState;
 
 namespace Infinity
 {
-	class INFINITY_API WindowsTexture2D : public Texture2D
+	class WindowsTexture2D : public Texture2D
 	{
 	private:
 		unsigned int m_width, m_height;
@@ -24,10 +24,9 @@ namespace Infinity
 		WindowsTexture2D();
 		~WindowsTexture2D();
 
-		bool Init(const char *filename, bool mipmap = false, float lod_bias = 0.0f) override;
+		bool Init(const String &filename, bool mipmap = false, float lod_bias = 0.0f) override;
 		bool Init(unsigned int width, unsigned int height, const unsigned char *pixels, bool mipmap = false, float lod_bias = 0.0f) override;
-		void Destroy() override;
-
+		
 		void Bind(unsigned int slot) const override;
 
 	private:

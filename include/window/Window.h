@@ -2,29 +2,33 @@
 
 #include"Core.h"
 
+#include"Context.h"
+
 #include"event/InputCodes.h"
 
 #include"Input.h"
 
+#include"utils/data/Resource.h"
+#include"utils/data/String.h"
+
 namespace Infinity
 {
-	class Context;
-
 	class INFINITY_API WindowIcon
 	{
 	public:
-		virtual bool Init(const char *file_path) = 0;
-		virtual void Destroy() = 0;
+		virtual bool Init(const String &file_path) = 0;
 
-		static WindowIcon *CreateWindowIcon();
+		static Resource<WindowIcon> CreateWindowIcon();
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API Resource<WindowIcon>;
 	
 	class INFINITY_API Window
 	{
 	public:
 		struct INFINITY_API MainWindowParams
 		{
-			const char *title = "Infinity Game Engine";
+			String title = "Infinity Game Engine";
 
 			unsigned int x = INFINITY_DONT_CARE;
 			unsigned int y = INFINITY_DONT_CARE;
@@ -38,12 +42,12 @@ namespace Infinity
 			bool auto_show = true;
 			bool auto_swap_buffers = true;
 
-			WindowIcon *icon = nullptr;
+			Resource<WindowIcon> icon = nullptr;
 		};
 
 		struct INFINITY_API ChildWindowParams
 		{
-			const char *title = "Infinity Game Engine";
+			String title = "Infinity Game Engine";
 
 			unsigned int x = INFINITY_DONT_CARE;
 			unsigned int y = INFINITY_DONT_CARE;
@@ -54,13 +58,15 @@ namespace Infinity
 
 			bool auto_swap_buffers = true;
 
-			WindowIcon *icon = nullptr;
+			Resource<WindowIcon> icon = nullptr;
 		};
 
 	protected:
-		static Context *s_context;
+		static Resource<Context> s_context;
 
 	public:
+		virtual ~Window() {}
+
 		virtual void MakeContextCurrent() const = 0;
 
 		virtual void Show() = 0;
@@ -83,6 +89,8 @@ namespace Infinity
 		virtual unsigned int GetWidth() const = 0;
 		virtual unsigned int GetHeight() const = 0;
 
-		static Context *GetContext();
+		static Resource<Context> GetContext();
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API Resource<Window>;
 }

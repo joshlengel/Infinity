@@ -4,6 +4,7 @@
 
 #include"Type.h"
 
+#include"utils/data/ArrayList.h"
 #include"utils/data/String.h"
 
 namespace Infinity
@@ -21,6 +22,8 @@ namespace Infinity
 			String name;
 			DataType type;
 
+			Element();
+
 			Element(const String &name, DataType type);
 			Element(String &&name, DataType type);
 
@@ -29,8 +32,7 @@ namespace Infinity
 		};
 
 	private:
-		unsigned int m_num_elements;
-		Element *m_elements;
+		ArrayList<Element> m_elements;
 
 		unsigned int m_stride;
 
@@ -38,8 +40,7 @@ namespace Infinity
 		VertexLayout(std::initializer_list<Element> list);
 		VertexLayout(const VertexLayout &layout);
 		VertexLayout(VertexLayout &&layout) noexcept;
-		~VertexLayout();
-
+		
 		VertexLayout &operator=(const VertexLayout &layout);
 		VertexLayout &operator=(VertexLayout &&layout) noexcept;
 
@@ -50,4 +51,6 @@ namespace Infinity
 
 		unsigned int GetStride() const;
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API ArrayList<VertexLayout::Element>;
 }

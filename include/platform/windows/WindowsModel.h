@@ -21,7 +21,6 @@ namespace Infinity
 		~WindowsVertexBuffer();
 
 		bool Init(bool dynamic) override;
-		void Destroy() override;
 
 		bool SetData(const void *data, unsigned int size) override;
 		void *GetNativeBuffer() const override;
@@ -42,7 +41,6 @@ namespace Infinity
 		~WindowsIndexBuffer();
 
 		bool Init(bool dynamic) override;
-		void Destroy() override;
 
 		bool SetData(const void *data, unsigned int size, unsigned int index_count) override;
 		void *GetNativeBuffer() const override;
@@ -51,7 +49,7 @@ namespace Infinity
 		unsigned int GetIndexSize() const override;
 	};
 
-	class INFINITY_API WindowsModel : public Model
+	class WindowsModel : public Model
 	{
 	public:
 		WindowsModel(unsigned int num_vertex_buffers);

@@ -4,6 +4,14 @@
 
 namespace Infinity
 {
+	VertexLayout::Element::Element():
+		offset(),
+		count(),
+		input_slot(),
+		name(),
+		type()
+	{}
+
 	VertexLayout::Element::Element(const String &name, DataType type):
 		offset(),
 		count(),
@@ -37,21 +45,15 @@ namespace Infinity
 	{}
 
 	VertexLayout::VertexLayout(std::initializer_list<Element> list):
-		m_num_elements((unsigned int)list.size()),
-		m_elements((Element*)malloc(m_num_elements * sizeof(Element))),
+		m_elements(list.begin(), (unsigned int)list.size()),
 		m_stride()
 	{
-		memset(m_elements, 0, m_num_elements * sizeof(Element));
-
 		const Element *itr = list.begin();
 
 		unsigned int offset = 0;
-		for (unsigned int i = 0; i < m_num_elements; ++i)
+		for (unsigned int i = 0; i < list.size(); ++i)
 		{
 			Element &e = m_elements[i];
-			e.name = itr->name;
-			e.type = itr->type;
-			e.input_slot = itr->input_slot;
 			e.offset = offset;
 			e.count = GetCount(itr->type);
 
@@ -64,58 +66,38 @@ namespace Infinity
 	}
 
 	VertexLayout::VertexLayout(const VertexLayout &layout):
-		m_num_elements(layout.m_num_elements),
-		m_elements((Element*)malloc(layout.m_num_elements * sizeof(Element))),
-		m_stride(layout.m_stride)
-	{
-		memcpy(m_elements, layout.m_elements, m_num_elements * sizeof(Element));
-	}
-
-	VertexLayout::VertexLayout(VertexLayout &&layout) noexcept:
-		m_num_elements(layout.m_num_elements),
 		m_elements(layout.m_elements),
 		m_stride(layout.m_stride)
-	{
-		layout.m_num_elements = 0;
-		layout.m_elements = nullptr;
-		layout.m_stride = 0;
-	}
+	{}
 
-	VertexLayout::~VertexLayout()
+	VertexLayout::VertexLayout(VertexLayout &&layout) noexcept:
+		m_elements(std::forward<ArrayList<Element>>(layout.m_elements)),
+		m_stride(layout.m_stride)
 	{
-		if (m_elements) free(m_elements);
+		layout.m_elements.Clear();
+		layout.m_stride = 0;
 	}
 
 	VertexLayout &VertexLayout::operator=(const VertexLayout &layout)
 	{
-		unsigned int size = layout.m_num_elements * sizeof(Element);
-
-		m_num_elements = layout.m_num_elements;
-		m_elements = (Element*)malloc(size);
+		m_elements = layout.m_elements;
 		m_stride = layout.m_stride;
-		
-		memcpy(m_elements, layout.m_elements, size);
 
 		return *this;
 	}
 
 	VertexLayout &VertexLayout::operator=(VertexLayout &&layout) noexcept
 	{
-		m_num_elements = layout.m_num_elements;
-		m_elements = layout.m_elements;
+		m_elements = std::forward<ArrayList<Element>>(layout.m_elements);
 		m_stride = layout.m_stride;
-
-		layout.m_num_elements = 0;
-		layout.m_elements = nullptr;
-		layout.m_stride = 0;
 
 		return *this;
 	}
 
-	const VertexLayout::Element *VertexLayout::begin() const { return m_elements; }
-	const VertexLayout::Element *VertexLayout::end() const { return m_elements + m_num_elements; }
+	const VertexLayout::Element *VertexLayout::begin() const { return m_elements.begin(); }
+	const VertexLayout::Element *VertexLayout::end() const { return m_elements.end(); }
 
-	unsigned int VertexLayout::GetNumElements() const { return m_num_elements; }
+	unsigned int VertexLayout::GetNumElements() const { return m_elements.GetSize(); }
 
 	unsigned int VertexLayout::GetStride() const { return m_stride; }
 }

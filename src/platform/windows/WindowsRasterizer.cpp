@@ -9,9 +9,9 @@
 
 namespace Infinity
 {
-	Rasterizer *Rasterizer::CreateRasterizer()
+	Resource<Rasterizer> Rasterizer::CreateRasterizer()
 	{
-		return new WindowsRasterizer;
+		return ResourceCast<Rasterizer>(MakeResource<WindowsRasterizer>());
 	}
 
 	WindowsRasterizer::WindowsRasterizer():
@@ -20,11 +20,21 @@ namespace Infinity
 	{}
 
 	WindowsRasterizer::~WindowsRasterizer()
-	{}
+	{
+		if (m_raster_state)
+		{
+			m_raster_state->Release();
+		}
+
+		if (m_blend_state)
+		{
+			m_blend_state->Release();
+		}
+	}
 
 	bool WindowsRasterizer::Init(CullMode cull, bool blend)
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11Device *device = context->GetDevice();
 
@@ -87,24 +97,9 @@ namespace Infinity
 		return true;
 	}
 
-	void WindowsRasterizer::Destroy()
-	{
-		if (m_raster_state)
-		{
-			m_raster_state->Release();
-			m_raster_state = nullptr;
-		}
-
-		if (m_blend_state)
-		{
-			m_blend_state->Release();
-			m_blend_state = nullptr;
-		}
-	}
-
 	void WindowsRasterizer::Bind()
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 

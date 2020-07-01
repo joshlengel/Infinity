@@ -191,6 +191,13 @@ namespace Infinity
 			m_data[m_size++] = elem;
 		}
 
+		void Add(T &&elem)
+		{
+			EnsureCapacity();
+
+			m_data[m_size++] = std::forward<T>(elem);
+		}
+
 		void Add(const T *elems, unsigned int num)
 		{
 			EnsureCapacity(num);
@@ -343,7 +350,7 @@ namespace Infinity
 	};
 
 	template <typename T>
-	bool Contains(const ArrayList<T> &list, const T &elem)
+	inline bool INFINITY_API Contains(const ArrayList<T> &list, const T &elem)
 	{
 		for (const T &t : list)
 			if (t == elem)
@@ -353,7 +360,7 @@ namespace Infinity
 	}
 
 	template <typename T>
-	const T *Find(const ArrayList<T> &list, const T &elem)
+	inline const T INFINITY_API *Find(const ArrayList<T> &list, const T &elem)
 	{
 		for (const T *itr = list.begin(); itr != list.end(); ++itr)
 			if (*itr == elem)
@@ -363,7 +370,7 @@ namespace Infinity
 	}
 
 	template <typename T>
-	T *Find(ArrayList<T> &list, const T &elem)
+	inline T INFINITY_API *Find(ArrayList<T> &list, const T &elem)
 	{
 		for (T *itr = list.begin(); itr != list.end(); ++itr)
 			if (*itr == elem)
@@ -373,7 +380,7 @@ namespace Infinity
 	}
 
 	template <typename T>
-	void Remove(ArrayList<T> &list, const T &elem)
+	inline void INFINITY_API Remove(ArrayList<T> &list, const T &elem)
 	{
 		list.Remove(Find(list, elem));
 	}

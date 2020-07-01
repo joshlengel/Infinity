@@ -68,36 +68,11 @@ namespace Infinity
 	{}
 
 	ModelLoader::~ModelLoader()
-	{}
-
-	void ModelLoader::Destroy()
 	{
-		for (auto &entry : m_models)
-		{
-			ModelAsset &asset = entry.value;
-
-			if (asset.v_buff)
-			{
-				asset.v_buff->Destroy();
-				delete asset.v_buff;
-			}
-
-			if (asset.i_buff)
-			{
-				asset.i_buff->Destroy();
-				delete asset.i_buff;
-			}
-
-			if (asset.model)
-			{
-				delete asset.model;
-			}
-		}
-
 		m_models.Clear();
 	}
 
-	void LoadOBJ(std::ifstream &file, VertexBuffer *vertex_buffer, IndexBuffer *index_buffer)
+	void LoadOBJ(std::ifstream &file, Resource<VertexBuffer> vertex_buffer, Resource<IndexBuffer> index_buffer)
 	{
 		INFINITY_PROFILE_SCOPE("LOAD OBJ");
 
@@ -292,21 +267,21 @@ namespace Infinity
 		delete[] arr_indices;
 	}
 
-	void ModelLoader::Load(const char *filename, Model *model, VertexBuffer *vertex_buffer, IndexBuffer *index_buffer)
+	void ModelLoader::Load(const String &filename, Resource<Model> model, Resource<VertexBuffer> vertex_buffer, Resource<IndexBuffer> index_buffer)
 	{
-		std::ifstream file(filename);
+		std::ifstream file(&filename[0]);
 
 		if (!file)
 		{
-			INFINITY_CORE_ERROR("Error finding model file '{0}'", filename);
+			INFINITY_CORE_ERROR("Error finding model file '{0}'", &filename[0]);
 			return;
 		}
 
-		const char *extension = GetExtension(filename);
+		const char *extension = GetExtension(&filename[0]);
 
 		if (strcmp(extension, "obj") == 0)
 		{
-			INFINITY_CORE_INFO("Loading '{0}' as OBJ file", filename);
+			INFINITY_CORE_INFO("Loading '{0}' as OBJ file", &filename[0]);
 			LoadOBJ(file, vertex_buffer, index_buffer);
 		}
 		else
@@ -318,10 +293,10 @@ namespace Infinity
 		model->SetIndexBuffer(index_buffer);
 	}
 
-	Model *ModelLoader::Load(StaticString name, const char *filename, const VertexLayout &layout)
+	Resource<Model> ModelLoader::Load(const String &name, const String &filename, const VertexLayout &layout)
 	{
-		VertexBuffer *v_buff = VertexBuffer::CreateVertexBuffer(layout);
-		IndexBuffer *i_buff = IndexBuffer::CreateIndexBuffer();
+		Resource<VertexBuffer> v_buff = VertexBuffer::CreateVertexBuffer(layout);
+		Resource<IndexBuffer> i_buff = IndexBuffer::CreateIndexBuffer();
 
 		if (!v_buff->Init())
 		{
@@ -333,18 +308,15 @@ namespace Infinity
 			INFINITY_CORE_ERROR("Error initializing index buffer in model loader");
 		}
 
-		Model *model = Model::CreateModel(1);
+		Resource<Model> model = Model::CreateModel(1);
 
 		Load(filename, model, v_buff, i_buff);
 
-		auto entry = m_models.Find(name);
+		auto entry = Find(m_models, name);
 
 		if (entry != m_models.end())
 		{
 			ModelAsset &asset = entry->value;
-			asset.v_buff->Destroy();
-			asset.i_buff->Destroy();
-
 			asset.v_buff = v_buff;
 			asset.i_buff = i_buff;
 			asset.model = model;
@@ -357,10 +329,10 @@ namespace Infinity
 		return model;
 	}
 
-	Model *ModelLoader::Load(StaticString name, const char *filename, VertexLayout &&layout)
+	Resource<Model> ModelLoader::Load(String &&name, const String &filename, const VertexLayout &layout)
 	{
-		VertexBuffer *v_buff = VertexBuffer::CreateVertexBuffer(std::move(layout));
-		IndexBuffer *i_buff = IndexBuffer::CreateIndexBuffer();
+		Resource<VertexBuffer> v_buff = VertexBuffer::CreateVertexBuffer(layout);
+		Resource<IndexBuffer> i_buff = IndexBuffer::CreateIndexBuffer();
 
 		if (!v_buff->Init())
 		{
@@ -372,18 +344,51 @@ namespace Infinity
 			INFINITY_CORE_ERROR("Error initializing index buffer in model loader");
 		}
 
-		Model *model = Model::CreateModel(1);
+		Resource<Model> model = Model::CreateModel(1);
 
 		Load(filename, model, v_buff, i_buff);
-
-		auto entry = m_models.Find(name);
+		
+		auto entry = Find(m_models, name);
 
 		if (entry != m_models.end())
 		{
 			ModelAsset &asset = entry->value;
-			asset.v_buff->Destroy();
-			asset.i_buff->Destroy();
+			asset.v_buff = v_buff;
+			asset.i_buff = i_buff;
+			asset.model = model;
+		}
+		else
+		{
+			m_models[std::forward<String>(name)] = { v_buff, i_buff, model };
+		}
 
+		return model;
+	}
+
+	Resource<Model> ModelLoader::Load(const String &name, const String &filename, VertexLayout &&layout)
+	{
+		Resource<VertexBuffer> v_buff = VertexBuffer::CreateVertexBuffer(std::forward<VertexLayout>(layout));
+		Resource<IndexBuffer> i_buff = IndexBuffer::CreateIndexBuffer();
+
+		if (!v_buff->Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing vertex buffer in model loader");
+		}
+
+		if (!i_buff->Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing index buffer in model loader");
+		}
+
+		Resource<Model> model = Model::CreateModel(1);
+
+		Load(filename, model, v_buff, i_buff);
+
+		auto entry = Find(m_models, name);
+
+		if (entry != m_models.end())
+		{
+			ModelAsset &asset = entry->value;
 			asset.v_buff = v_buff;
 			asset.i_buff = i_buff;
 			asset.model = model;
@@ -396,32 +401,51 @@ namespace Infinity
 		return model;
 	}
 
-	Model *ModelLoader::Get(StaticString name)
+	Resource<Model> ModelLoader::Load(String &&name, const String &filename, VertexLayout &&layout)
 	{
-		return m_models[name].model;
+		Resource<VertexBuffer> v_buff = VertexBuffer::CreateVertexBuffer(std::forward<VertexLayout>(layout));
+		Resource<IndexBuffer> i_buff = IndexBuffer::CreateIndexBuffer();
+
+		if (!v_buff->Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing vertex buffer in model loader");
+		}
+
+		if (!i_buff->Init())
+		{
+			INFINITY_CORE_ERROR("Error initializing index buffer in model loader");
+		}
+
+		Resource<Model> model = Model::CreateModel(1);
+
+		Load(filename, model, v_buff, i_buff);
+
+		auto entry = Find(m_models, name);
+
+		if (entry != m_models.end())
+		{
+			ModelAsset &asset = entry->value;
+			asset.v_buff = v_buff;
+			asset.i_buff = i_buff;
+			asset.model = model;
+		}
+		else
+		{
+			m_models[std::forward<String>(name)] = { v_buff, i_buff, model };
+		}
+
+		return model;
 	}
 
-	void ModelLoader::Destroy(StaticString name)
+	Resource<Model> ModelLoader::Get(const String &name)
 	{
-		ModelAsset asset = m_models[name];
+		auto itr = Find(m_models, name);
 
-		if (asset.v_buff)
-		{
-			asset.v_buff->Destroy();
-			delete asset.v_buff;
-		}
+		return itr == m_models.end()? nullptr : itr->value.model;
+	}
 
-		if (asset.i_buff)
-		{
-			asset.i_buff->Destroy();
-			delete asset.i_buff;
-		}
-
-		if (asset.model)
-		{
-			delete asset.model;
-		}
-
-		m_models.Remove(name);
+	void ModelLoader::Remove(const String &name)
+	{
+		Infinity::Remove(m_models, name);
 	}
 }

@@ -27,8 +27,7 @@ namespace Infinity
 		WindowsShader(VertexLayout &&layout);
 		~WindowsShader();
 
-		bool Init(const char *vertex_source, unsigned int vs_size, const char *pixel_source, unsigned int ps_size) override;
-		void Destroy() override;
+		bool Init(const String &vertex_source, const String &pixel_source) override;
 
 		bool DeclareConstants(const VertexLayout &layout) override;
 		bool DeclareConstants(VertexLayout &&layout) override;

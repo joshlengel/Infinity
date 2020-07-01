@@ -2,6 +2,9 @@
 
 #include"Core.h"
 
+#include"Application.h"
+
+#include"event/Event.h"
 #include"event/EventQueue.h"
 #include"event/InputCodes.h"
 
@@ -11,22 +14,14 @@
 
 #include<functional>
 
-namespace Infinity
-{
-	class Event;
-	class Application;
-}
-
-typedef std::function<void(Infinity::Event*)> EventHandler;
-
-INFINITY_TEMPLATE template class INFINITY_API std::function<void(Infinity::Event*)>;
+INFINITY_TEMPLATE template class INFINITY_API std::function<void(Infinity::Event&)>;
 
 namespace Infinity
 {
-	INFINITY_TEMPLATE template class INFINITY_API ArrayList<EventHandler>;
-
-	class INFINITY_API BaseApplication
+	class BaseApplication
 	{
+		using EventHandler = std::function<void(Event&)>;
+
 	private:
 		EventQueue m_event_queue;
 		ArrayList<EventHandler> m_event_handlers;
@@ -59,6 +54,6 @@ namespace Infinity
 	private:
 		void DispatchEvents();
 
-		void CallOnUserEvent(Event *event);
+		void CallOnUserEvent(Event &event);
 	};
 }

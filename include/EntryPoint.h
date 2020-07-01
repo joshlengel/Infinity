@@ -4,12 +4,12 @@ namespace Infinity
 {
 	class Application;
 
+	Application *CreateApplication();
+
 	void INFINITY_API ExecuteMain(Application *application);
 }
 
 #ifdef INFINITY_ENTRY_POINT
-
-extern Infinity::Application *Infinity::CreateApplication();
 
 int main(int argc, char **argv)
 {

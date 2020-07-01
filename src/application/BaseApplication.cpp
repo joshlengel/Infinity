@@ -13,7 +13,7 @@
 
 namespace Infinity
 {
-	BaseApplication *BaseApplication::s_application = nullptr;
+	BaseApplication *BaseApplication::s_application;
 
 	BaseApplication::BaseApplication(Application *application):
 		m_event_queue(),
@@ -42,7 +42,7 @@ namespace Infinity
 		{
 			for (unsigned int i = 0; i < m_priority_event_handlers.GetSize(); ++i)
 			{
-				m_priority_event_handlers[i](event);
+				m_priority_event_handlers[i](*event);
 
 				if (event->IsConsumed())
 				{
@@ -58,7 +58,7 @@ namespace Infinity
 
 			for (unsigned int i = 0; i < m_event_handlers.GetSize(); ++i)
 			{
-				m_event_handlers[i](event);
+				m_event_handlers[i](*event);
 
 				if (event->IsConsumed())
 				{
@@ -78,10 +78,9 @@ namespace Infinity
 			return;
 		}
 
-		ApplicationEnteredEvent *entered_event = new ApplicationEnteredEvent(this);
+		ApplicationEnteredEvent entered_event;
 		m_application->OnApplicationEntered(entered_event);
-		m_main_params = entered_event->GetMainWindowParams();
-		delete entered_event;
+		m_main_params = entered_event.GetMainWindowParams();
 		
 		if (!m_window_system.InitMainWindow(m_main_params))
 		{
@@ -93,7 +92,7 @@ namespace Infinity
 
 		m_window_system.GetMainWindow()->MakeContextCurrent();
 
-		PushEvent(new UserCreateEvent(this));
+		PushEvent(new UserCreateEvent);
 		DispatchEvents();
 
 		m_window_system.GetMainWindow()->Show();
@@ -109,27 +108,27 @@ namespace Infinity
 			double dt = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
 			t1 = t2;
 
-			PushEvent(new UserUpdateEvent(dt, this));
+			PushEvent(new UserUpdateEvent(dt));
 
 			DispatchEvents();
 
 			BaseWindow::PollInput();
 			_Impl::Update();
 
-			PushEvent(new UserRenderEvent(this));
+			PushEvent(new UserRenderEvent);
 
 			DispatchEvents();
 
 			m_window_system.GetMainWindow()->SwapBuffers();
-			for (Window *window : m_window_system.GetChildWindows())
+			for (Resource<Window> window : m_window_system.GetChildWindows())
 			{
-				if (((BaseWindow*)window)->AutoSwapBuffers()) window->SwapBuffers();
+				if (ResourceCast<BaseWindow>(window)->AutoSwapBuffers()) window->SwapBuffers();
 			}
 		}
 
 		INFINITY_CORE_TRACE("Application exited");
 
-		PushEvent(new UserDestroyEvent(this));
+		PushEvent(new UserDestroyEvent);
 
 		DispatchEvents();
 	}
@@ -145,93 +144,95 @@ namespace Infinity
 	}
 
 	void BaseApplication::PushEvent(Event *event) { m_event_queue.PushEvent(event); }
-	void BaseApplication::RequestExit() { PushEvent(new ApplicationExitedEvent(nullptr)); }
+	void BaseApplication::RequestExit() { PushEvent(new ApplicationExitedEvent); }
 
-	void BaseApplication::CallOnUserEvent(Event *event)
+	void BaseApplication::CallOnUserEvent(Event &event)
 	{
-		switch (event->GetType())
+		switch (event.GetType())
 		{
 		case Event::EventType::UserCreate:
 		{
-			m_application->OnUserCreate((UserCreateEvent*)event);
+			m_application->OnUserCreate((UserCreateEvent&)event);
 			break;
 		}
 		case Event::EventType::UserUpdate:
 		{
-			m_application->OnUserUpdate((UserUpdateEvent*)event);
+			m_application->OnUserUpdate((UserUpdateEvent&)event);
 			break;
 		}
 		case Event::EventType::UserRender:
 		{
-			m_application->OnUserRender((UserRenderEvent*)event);
+			m_application->OnUserRender((UserRenderEvent&)event);
 			break;
 		}
 		case Event::EventType::UserDestroy:
 		{
-			m_application->OnUserDestroy((UserDestroyEvent*)event);
+			m_application->OnUserDestroy((UserDestroyEvent&)event);
 			break;
 		}
 		case Event::EventType::ApplicationExited:
 		{
-			Window *main_window = m_window_system.GetMainWindow();
+			Resource<Window> main_window = m_window_system.GetMainWindow();
 
 			if (!main_window->ShouldClose())
 				PushEvent(new WindowClosedEvent(main_window));
 
-			m_application->OnApplicationExited((ApplicationExitedEvent*)event);
+			m_application->OnApplicationExited((ApplicationExitedEvent&)event);
 
 			m_exit = true;
 			break;
 		}
 		case Event::EventType::WindowResized:
 		{
-			m_application->OnWindowResized((WindowResizedEvent*)event);
+			m_application->OnWindowResized((WindowResizedEvent&)event);
 			break;
 		}
 		case Event::EventType::WindowClosed:
 		{
-			if ((Window*)event->GetCaller() == m_window_system.GetMainWindow())
+			WindowClosedEvent &wce = (WindowClosedEvent&)event;
+
+			if (ResourceCast<Window>(wce.GetWindow()) == m_window_system.GetMainWindow())
 			{
-				PushEvent(new ApplicationExitedEvent(this));
+				PushEvent(new ApplicationExitedEvent);
 			}
 
-			m_application->OnWindowClosed((WindowClosedEvent*)event);
+			m_application->OnWindowClosed((WindowClosedEvent&)event);
 
 			break;
 		}
 		case Event::EventType::KeyPressed:
 		{
-			m_application->OnKeyPressed((KeyPressedEvent*)event);
+			m_application->OnKeyPressed((KeyPressedEvent&)event);
 			break;
 		}
 		case Event::EventType::KeyReleased:
 		{
-			m_application->OnKeyReleased((KeyReleasedEvent*)event);
+			m_application->OnKeyReleased((KeyReleasedEvent&)event);
 			break;
 		}
 		case Event::EventType::MousePressed:
 		{
-			m_application->OnMousePressed((MousePressedEvent*)event);
+			m_application->OnMousePressed((MousePressedEvent&)event);
 			break;
 		}
 		case Event::EventType::MouseReleased:
 		{
-			m_application->OnMouseReleased((MouseReleasedEvent*)event);
+			m_application->OnMouseReleased((MouseReleasedEvent&)event);
 			break;
 		}
 		case Event::EventType::CursorEntered:
 		{
-			m_application->OnCursorEntered((CursorEnteredEvent*)event);
+			m_application->OnCursorEntered((CursorEnteredEvent&)event);
 			break;
 		}
 		case Event::EventType::CursorExited:
 		{
-			m_application->OnCursorExited((CursorExitedEvent*)event);
+			m_application->OnCursorExited((CursorExitedEvent&)event);
 			break;
 		}
 		case Event::EventType::CursorMoved:
 		{
-			m_application->OnCursorMoved((CursorMovedEvent*)event);
+			m_application->OnCursorMoved((CursorMovedEvent&)event);
 			break;
 		}
 		}

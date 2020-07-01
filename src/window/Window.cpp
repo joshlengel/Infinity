@@ -4,7 +4,7 @@
 
 namespace Infinity
 {
-	Context *Window::s_context = nullptr;
+	Resource<Context> Window::s_context = nullptr;
 
-	Context *Window::GetContext() { return s_context; }
+	Resource<Context> Window::GetContext() { return s_context; }
 }

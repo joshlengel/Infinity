@@ -27,14 +27,14 @@ namespace Infinity
 		}
 	}
 
-	Shader *Shader::CreateShader(const VertexLayout &layout)
+	Resource<Shader> Shader::CreateShader(const VertexLayout &layout)
 	{
-		return new WindowsShader(layout);
+		return ResourceCast<Shader>(MakeResource<WindowsShader>(layout));
 	}
 
-	Shader *Shader::CreateShader(VertexLayout &&layout)
+	Resource<Shader> Shader::CreateShader(VertexLayout &&layout)
 	{
-		return new WindowsShader(std::move(layout));
+		return ResourceCast<Shader>(MakeResource<WindowsShader>(std::forward<VertexLayout>(layout)));
 	}
 
 	WindowsShader::WindowsShader(const VertexLayout &layout):
@@ -47,7 +47,7 @@ namespace Infinity
 	{}
 
 	WindowsShader::WindowsShader(VertexLayout &&layout):
-		Shader(std::move(layout)),
+		Shader(std::forward<VertexLayout>(layout)),
 		m_vertex_shader(nullptr),
 		m_pixel_shader(nullptr),
 		m_input_layout(nullptr),
@@ -56,13 +56,33 @@ namespace Infinity
 	{}
 
 	WindowsShader::~WindowsShader()
-	{}
+	{
+		if (m_vertex_shader)
+		{
+			m_vertex_shader->Release();
+		}
 
-	bool WindowsShader::Init(const char *vertex_source, unsigned int vs_size, const char *pixel_source, unsigned int ps_size)
+		if (m_pixel_shader)
+		{
+			m_pixel_shader->Release();
+		}
+
+		if (m_input_layout)
+		{
+			m_input_layout->Release();
+		}
+
+		if (m_constant_buffer)
+		{
+			m_constant_buffer->Release();
+		}
+	}
+
+	bool WindowsShader::Init(const String &vertex_source, const String &pixel_source)
 	{
 		ID3DBlob *vertex_bc, *pixel_bc, *error = nullptr;
 		
-		if (FAILED(D3DCompile(vertex_source, vs_size, "vertex", nullptr, nullptr, "main", "vs_5_0",
+		if (FAILED(D3DCompile(&vertex_source[0], vertex_source.Length() + 1, "vertex", nullptr, nullptr, "main", "vs_5_0",
 			0, 0, &vertex_bc, &error)))
 		{
 			if (!error)
@@ -78,7 +98,7 @@ namespace Infinity
 			}
 		}
 
-		if (FAILED(D3DCompile(pixel_source, ps_size, "pixel", nullptr, nullptr, "main", "ps_5_0",
+		if (FAILED(D3DCompile(&pixel_source[0], pixel_source.Length() + 1, "pixel", nullptr, nullptr, "main", "ps_5_0",
 			0, 0, &pixel_bc, &error)))
 		{
 			if (!error)
@@ -94,7 +114,7 @@ namespace Infinity
 			}
 		}
 
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11Device *device = context->GetDevice();
 		
@@ -148,38 +168,11 @@ namespace Infinity
 		return true;
 	}
 
-	void WindowsShader::Destroy()
-	{
-		if (m_vertex_shader)
-		{
-			m_vertex_shader->Release();
-			m_vertex_shader = nullptr;
-		}
-
-		if (m_pixel_shader)
-		{
-			m_pixel_shader->Release();
-			m_pixel_shader = nullptr;
-		}
-
-		if (m_input_layout)
-		{
-			m_input_layout->Release();
-			m_input_layout = nullptr;
-		}
-
-		if (m_constant_buffer)
-		{
-			m_constant_buffer->Release();
-			m_constant_buffer = nullptr;
-		}
-	}
-
 	bool WindowsShader::DeclareConstants(const VertexLayout &layout)
 	{
 		m_constant_layout = layout;
 
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11Device *device = context->GetDevice();
 
@@ -218,9 +211,9 @@ namespace Infinity
 
 	bool WindowsShader::DeclareConstants(VertexLayout &&layout)
 	{
-		m_constant_layout = std::move(layout);
+		m_constant_layout = std::forward<VertexLayout>(layout);
 
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11Device *device = context->GetDevice();
 
@@ -278,7 +271,7 @@ namespace Infinity
 
 	bool WindowsShader::MapConstants()
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
@@ -293,7 +286,7 @@ namespace Infinity
 
 	void WindowsShader::UnmapConstants()
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
@@ -304,7 +297,7 @@ namespace Infinity
 
 	void WindowsShader::Bind()
 	{
-		WindowsContext *context = (WindowsContext*)Window::GetContext();
+		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 

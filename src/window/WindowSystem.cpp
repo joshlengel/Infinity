@@ -15,16 +15,7 @@ namespace Infinity
 	{}
 
 	WindowSystem::~WindowSystem()
-	{
-		((BaseWindow*)m_main_window)->Destroy();
-		delete m_main_window;
-
-		for (Window *window : m_child_windows)
-		{
-			((BaseWindow*)window)->Destroy();
-			delete window;
-		}
-	}
+	{}
 
 	bool WindowSystem::InitMainWindow(const Window::MainWindowParams &params)
 	{
@@ -43,9 +34,9 @@ namespace Infinity
 		bw_params.enable_alt_enter_fullscreen = params.enable_alt_enter_fullscreen;
 		bw_params.icon = params.icon;
 
-		m_main_window = BaseWindow::CreateBaseWindow();
+		m_main_window = ResourceCast<Window>(BaseWindow::CreateBaseWindow());
 
-		if (!((BaseWindow*)m_main_window)->Init(bw_params))
+		if (!ResourceCast<BaseWindow>(m_main_window)->Init(bw_params))
 		{
 			INFINITY_CORE_ERROR("Error initializing main window");
 			return false;
@@ -56,13 +47,13 @@ namespace Infinity
 		return true;
 	}
 
-	Window *WindowSystem::GetMainWindow() const { return m_main_window; }
-	const ArrayList<Window*> &WindowSystem::GetChildWindows() const { return m_child_windows; }
+	Resource<Window> WindowSystem::GetMainWindow() const { return m_main_window; }
+	const ArrayList<Resource<Window>> &WindowSystem::GetChildWindows() const { return m_child_windows; }
 
-	Window *WindowSystem::CreateChildWindow(const Window::ChildWindowParams &params) const
+	Resource<Window> WindowSystem::CreateChildWindow(const Window::ChildWindowParams &params) const
 	{
 		BaseWindow::BaseWindowParams bw_params;
-		bw_params.parent = (BaseWindow*)m_main_window;
+		bw_params.parent = ResourceCast<BaseWindow>(m_main_window);
 		bw_params.style = BaseWindow::BaseWindowStyle::ChildWindow;
 		bw_params.title = params.title;
 		bw_params.x = params.x;
@@ -76,50 +67,41 @@ namespace Infinity
 		bw_params.enable_alt_enter_fullscreen = false;
 		bw_params.icon = params.icon;
 
-		BaseWindow *base_window = BaseWindow::CreateBaseWindow();
+		Resource<BaseWindow> base_window = BaseWindow::CreateBaseWindow();
 
 		if (!base_window->Init(bw_params))
 		{
 			INFINITY_CORE_ERROR("Error initializing child window");
-			delete base_window;
 			return nullptr;
 		}
 
-		m_child_windows.Add(base_window);
+		m_child_windows.Add(ResourceCast<Window>(base_window));
 
-		return base_window;
+		return ResourceCast<Window>(base_window);
 	}
 
-	void WindowSystem::DestroyChildWindow(Window *window) const
+	void WindowSystem::DestroyChildWindow(Resource<Window> window) const
 	{
-		if (window)
-		{
-			((BaseWindow*)window)->Destroy();
-			delete window;
-
-			Remove(m_child_windows, window);
-		}
+		Remove(m_child_windows, window);
 	}
 
-	void WindowSystem::EventHandler(Event *event)
+	void WindowSystem::EventHandler(Event &event)
 	{
-		switch (event->GetType())
+		switch (event.GetType())
 		{
 		case Event::EventType::WindowClosed:
-			BaseWindow *window = (BaseWindow*)event->GetCaller();
+			Resource<Window> window = ((WindowClosedEvent&)event).GetWindow();
 
 			if (window == GetMainWindow())
 			{
-				for (Window *window : GetChildWindows())
+				for (Resource<Window> window : GetChildWindows())
 				{
 					BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window));
 				}
 			}
-			else if (Contains(GetChildWindows(), (Window*)window))
+			else if (Contains(m_child_windows, window))
 			{
-				Remove(m_child_windows, (Window*)window);
-				window->Destroy();
-				delete window;
+				Remove(m_child_windows, window);
 			}
 			break;
 		}

@@ -2,8 +2,6 @@
 
 #include"Core.h"
 
-#include"Application.h"
-
 #include"event/Event.h"
 #include"event/EventQueue.h"
 #include"event/InputCodes.h"
@@ -11,6 +9,8 @@
 #include"utils/data/ArrayList.h"
 
 #include"window/WindowSystem.h"
+
+#include"state/StateMachine.h"
 
 #include<functional>
 
@@ -30,21 +30,18 @@ namespace Infinity
 		Window::MainWindowParams m_main_params;
 		WindowSystem m_window_system;
 
-		bool m_exit;
+		State *m_start_state;
 
 		static BaseApplication *s_application;
 
-		Application *m_application;
-
 	public:
-		BaseApplication(Application *application);
+		BaseApplication(State *start_state);
 		virtual ~BaseApplication();
 
 		void AddEventHandler(EventHandler handler);
 		void AddPriorityEventHandler(EventHandler handler);
 		void PushEvent(Event *event);
-		void RequestExit();
-
+		
 		void Run();
 
 		const WindowSystem &GetWindowSystem() const;
@@ -54,6 +51,6 @@ namespace Infinity
 	private:
 		void DispatchEvents();
 
-		void CallOnUserEvent(Event &event);
+		void EventHandlerFunc(Event &event);
 	};
 }

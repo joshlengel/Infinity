@@ -48,7 +48,7 @@ namespace Infinity
 	{}
 
 	WindowsVertexBuffer::WindowsVertexBuffer(VertexLayout &&layout):
-		VertexBuffer(std::move(layout)),
+		VertexBuffer(std::forward<VertexLayout>(layout)),
 		m_buffer(nullptr),
 		m_prev_size(),
 		m_dynamic()
@@ -100,6 +100,7 @@ namespace Infinity
 
 			D3D11_SUBRESOURCE_DATA subres_data = {};
 			subres_data.pSysMem = data;
+			subres_data.SysMemPitch = size;
 
 			if (FAILED(device->CreateBuffer(&buffer_desc, data? &subres_data : nullptr, &m_buffer))) return false;
 			
@@ -167,6 +168,7 @@ namespace Infinity
 
 			D3D11_SUBRESOURCE_DATA subres_data = {};
 			subres_data.pSysMem = data;
+			subres_data.SysMemPitch = size;
 
 			if (FAILED(device->CreateBuffer(&buffer_desc, data? &subres_data : nullptr, &m_buffer))) return false;
 
@@ -196,13 +198,14 @@ namespace Infinity
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();
 
-		for (unsigned int i = 0; i < m_vertex_buffers.GetSize(); ++i)
+		unsigned int index = 0;
+		for (const Resource<VertexBuffer> &vertex_buffer : m_vertex_buffers)
 		{
-			ID3D11Buffer *buffer = (ID3D11Buffer*)m_vertex_buffers[i]->GetNativeBuffer();
-			unsigned int stride = m_vertex_buffers[i]->GetLayout().GetStride();
+			ID3D11Buffer *buffer = (ID3D11Buffer*)vertex_buffer->GetNativeBuffer();
+			unsigned int stride = vertex_buffer->GetLayout().GetStride();
 			unsigned int offset = 0;
 
-			device_context->IASetVertexBuffers(i, 1, &buffer, &stride, &offset);
+			device_context->IASetVertexBuffers(index++, 1, &buffer, &stride, &offset);
 		}
 
 		device_context->IASetIndexBuffer((ID3D11Buffer*)m_index_buffer->GetNativeBuffer(), GetFormat(m_index_buffer->GetIndexSize()), 0);

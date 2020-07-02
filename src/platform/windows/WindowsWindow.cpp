@@ -118,6 +118,8 @@ namespace Infinity
 			INFINITY_CORE_WARN("Unable to register hotkey for alt+enter");
 		}
 
+		BaseApplication::GetApplication()->AddPriorityEventHandler(WindowsWindow::EventHandler);
+
 		return true;
 	}
 
@@ -422,7 +424,6 @@ namespace Infinity
 			SendMessageA(m_window_handle, WM_SETICON, ICON_BIG, (LPARAM)icon->GetBigHICON());
 		}
 
-		BaseApplication::GetApplication()->AddPriorityEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(WindowsWindow::EventHandler));
 		BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(m_width, m_height, GetBaseResource()));
 
 		return true;
@@ -623,7 +624,7 @@ namespace Infinity
 			if (FAILED(m_swap_chain->ResizeBuffers(0, m_width, m_height, DXGI_FORMAT_UNKNOWN, 0)))
 			{
 				INFINITY_CORE_ERROR("Error resizing window buffers");
-				BaseApplication::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 				return false;
 			}
 			
@@ -631,7 +632,7 @@ namespace Infinity
 			if (FAILED(m_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&back_buffer)))
 			{
 				INFINITY_CORE_ERROR("Error getting window buffer after resize");
-				BaseApplication::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 				return false;
 			}
 
@@ -646,7 +647,7 @@ namespace Infinity
 			{
 				INFINITY_CORE_ERROR("Error creating render target view after resize");
 				back_buffer->Release();
-				BaseApplication::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 				return false;
 			}
 
@@ -659,7 +660,7 @@ namespace Infinity
 			if (FAILED(m_device->CreateTexture2D(&dsb_desc, nullptr, &m_depth_stencil_buffer)))
 			{
 				INFINITY_CORE_ERROR("Error creating depth stencil buffer after resizing context");
-				BaseApplication::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 				return false;
 			}
 
@@ -670,7 +671,7 @@ namespace Infinity
 			if (FAILED(m_device->CreateDepthStencilView(m_depth_stencil_buffer, &dsv_desc, &m_depth_stencil_view)))
 			{
 				INFINITY_CORE_ERROR("Error creating depth stencil view after resizing context");
-				BaseApplication::GetApplication()->RequestExit();
+				BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 				return false;
 			}
 			
@@ -681,7 +682,7 @@ namespace Infinity
 				if (!win_con->Resize(m_render_target_view, m_depth_stencil_view, m_width, m_height))
 				{
 					INFINITY_CORE_ERROR("Error resizing context");
-					BaseApplication::GetApplication()->RequestExit();
+					BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 					return false;
 				}
 			}
@@ -706,10 +707,9 @@ namespace Infinity
 		case Event::EventType::WindowResized:
 		{
 			WindowResizedEvent &wre = (WindowResizedEvent&)event;
+			Resource<WindowsWindow> window = ResourceCast<WindowsWindow>(wre.GetWindow());
 
-			if (wre.GetWindow().Get() != this) return;
-
-			if (!Resize())
+			if (!window->Resize())
 				event.Consume();
 
 			break;
@@ -717,11 +717,10 @@ namespace Infinity
 		case Event::EventType::WindowClosed:
 		{
 			WindowClosedEvent &wre = (WindowClosedEvent&)event;
+			Resource<WindowsWindow> window = ResourceCast<WindowsWindow>(wre.GetWindow());
 
-			if (wre.GetWindow().Get() != this) return;
-
-			m_should_close = true;
-			DestroyWindow(m_window_handle);
+			window->m_should_close = true;
+			DestroyWindow(window->m_window_handle);
 			break;
 		}
 		}
@@ -746,7 +745,7 @@ namespace Infinity
 		if (!SetWindowPos(m_window_handle, HWND_TOP, 0, 0, m_width, m_height, SWP_FRAMECHANGED))
 		{
 			INFINITY_CORE_ERROR("Error resizing window after entering fullscreen mode");
-			BaseApplication::GetApplication()->RequestExit();
+			BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 			return;
 		}
 
@@ -760,7 +759,7 @@ namespace Infinity
 		if (FAILED(m_swap_chain->SetFullscreenState(false, nullptr)))
 		{
 			INFINITY_CORE_ERROR("Error changing to restored state");
-			BaseApplication::GetApplication()->RequestExit();
+			BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 			return;
 		}
 
@@ -772,7 +771,7 @@ namespace Infinity
 			SWP_NOZORDER | SWP_NOACTIVATE))
 		{
 			INFINITY_CORE_ERROR("Error resizing window after exiting fullscreen mode");
-			BaseApplication::GetApplication()->RequestExit();
+			BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 			return;
 		}
 

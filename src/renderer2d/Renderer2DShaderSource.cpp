@@ -25,7 +25,7 @@ VertexOut main(VertexIn input)
 	VertexOut output;
 	
 	output.position = mul(float4(input.position, 0.0, 1.0), projection_view);
-	output.color = input.color;
+	output.color = float4(1.0, 0.0, 0.0, 1.0); //input.color;
 	output.tex_coords = input.tex_coords;
 
 	return output;

@@ -122,14 +122,14 @@ namespace Infinity
 		m_unbatched.model->SetIndexBuffer(m_unbatched.i_buff);
 
 		m_batched.shader = Shader::CreateShader({
-			{ String("position"),   DataType::FLOAT2, 0 },
-			{ String("color"),      DataType::FLOAT4, 0 },
-			{ String("tex_coords"), DataType::FLOAT2, 0 }
+			{ "position",   DataType::FLOAT2, 0 },
+			{ "color",      DataType::FLOAT4, 0 },
+			{ "tex_coords", DataType::FLOAT2, 0 }
 		});
 
 		m_unbatched.shader = Shader::CreateShader({
-			{ String("vertex"),     DataType::FLOAT2, 0 },
-			{ String("tex_coords"), DataType::FLOAT2, 0 }
+			{ "vertex",     DataType::FLOAT2, 0 },
+			{ "tex_coords", DataType::FLOAT2, 0 }
 		});
 
 		if (!m_batched.shader->Init(renderer2D_batched_v_source, renderer2D_p_source)
@@ -141,11 +141,11 @@ namespace Infinity
 		}
 
 		if (!m_batched.shader->DeclareConstants({
-				{ String("projection_view"), DataType::MAT4 }
+				{ "projection_view", DataType::MAT4 }
 			}) || !m_unbatched.shader->DeclareConstants({
-				{ String("model"),           DataType::MAT4   },
-				{ String("projection_view"), DataType::MAT4   },
-				{ String("color"),           DataType::FLOAT4 }
+				{ "model",           DataType::MAT4   },
+				{ "projection_view", DataType::MAT4   },
+				{ "color",           DataType::FLOAT4 }
 			}))
 		{
 			INFINITY_CORE_ERROR("Error declaring Renderer2D shader constants");

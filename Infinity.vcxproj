@@ -187,8 +187,9 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\application\Application.h" />
     <ClInclude Include="include\application\BaseApplication.h" />
+    <ClInclude Include="include\state\State.h" />
+    <ClInclude Include="include\state\StateMachine.h" />
     <ClInclude Include="include\window\BaseWindow.h" />
     <ClInclude Include="include\Context.h" />
     <ClInclude Include="include\Core.h" />
@@ -230,7 +231,6 @@
     <ClInclude Include="include\window\WindowSystem.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\application\Application.cpp" />
     <ClCompile Include="src\application\BaseApplication.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\InfinityPCH.cpp">
@@ -241,6 +241,8 @@
     <ClCompile Include="src\platform\windows\WindowsInput.cpp" />
     <ClCompile Include="src\renderer2d\Renderer2DShaderSource.cpp" />
     <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\state\State.cpp" />
+    <ClCompile Include="src\state\StateMachine.cpp" />
     <ClCompile Include="src\Type.cpp" />
     <ClCompile Include="src\utils\ShaderLoader.cpp" />
     <ClCompile Include="src\VertexLayout.cpp" />

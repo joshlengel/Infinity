@@ -2,14 +2,19 @@
 
 #include"EntryPoint.h"
 
-#include"application/Application.h"
+#include"state/State.h"
 #include"application/BaseApplication.h"
 
 namespace Infinity
 {
-	void ExecuteMain(Application *application)
+	namespace _Impl
 	{
-		BaseApplication base_app(application);
+		State *start_state;
+	}
+
+	void ExecuteMain(State *start_state)
+	{
+		BaseApplication base_app(start_state);
 
 		base_app.Run();
 	}

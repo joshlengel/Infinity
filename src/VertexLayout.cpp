@@ -24,7 +24,7 @@ namespace Infinity
 		offset(),
 		count(),
 		input_slot(),
-		name(std::move(name)),
+		name(std::forward<String>(name)),
 		type(type)
 	{}
 
@@ -40,12 +40,12 @@ namespace Infinity
 		offset(),
 		count(),
 		input_slot(input_slot),
-		name(std::move(name)),
+		name(std::forward<String>(name)),
 		type(type)
 	{}
 
 	VertexLayout::VertexLayout(std::initializer_list<Element> list):
-		m_elements(list.begin(), (unsigned int)list.size()),
+		m_elements(list),
 		m_stride()
 	{
 		const Element *itr = list.begin();

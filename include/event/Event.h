@@ -4,16 +4,16 @@
 
 #include"InputCodes.h"
 
-#ifdef DEBUG
-#include"utils/data/String.h"
-#endif // DEBUG
-
 #include"utils/data/Resource.h"
+#include"utils/data/Map.h"
+#include"utils/data/String.h"
 
 #include"window/Window.h"
 
 namespace Infinity
 {
+	class State;
+
 	class INFINITY_API Event
 	{
 	public:
@@ -21,8 +21,8 @@ namespace Infinity
 		{
 			// Handleable by client
 			WindowResized, WindowClosed,
-			ApplicationEntered, ApplicationExited,
-			UserCreate, UserUpdate, UserRender, UserDestroy,
+			ApplicationInterrupted,
+			StateEntered, StateUpdated, StateRendered, StateExited,
 			KeyPressed, KeyReleased, MousePressed, MouseReleased,
 			CursorEntered, CursorExited, CursorMoved
 		};
@@ -44,7 +44,7 @@ namespace Infinity
 #else
 		Event(EventType type);
 #endif // DEBUG
-		virtual ~Event();
+		virtual ~Event() {}
 
 		EventType GetType() const;
 		void Consume();
@@ -61,8 +61,7 @@ namespace Infinity
 
 	public:
 		WindowResizedEvent(unsigned int width, unsigned int height, Resource<Window> window);
-		~WindowResizedEvent();
-
+		
 		Resource<Window> GetWindow() const;
 
 		unsigned int GetWidth() const;
@@ -78,63 +77,63 @@ namespace Infinity
 		WindowClosedEvent(Resource<Window> window);
 
 		Resource<Window> GetWindow() const;
-		~WindowClosedEvent();
 	};
 
 	// Application events
 
-	class INFINITY_API ApplicationEnteredEvent : public Event
+	class INFINITY_API ApplicationInterruptedEvent : public Event
+	{
+	public:
+		ApplicationInterruptedEvent();
+	};
+
+	// State events
+
+	class INFINITY_API StateEnteredEvent : public Event
 	{
 	private:
-		Window::MainWindowParams m_params;
+		Map<String, AnyResource> &m_resources;
 
 	public:
-		ApplicationEnteredEvent();
-		~ApplicationEnteredEvent();
-
-		Window::MainWindowParams &GetMainWindowParams();
+		StateEnteredEvent(Map<String, AnyResource> &resources);
+		
+		Map<String, AnyResource> &GetResources() const;
 	};
 
-	class INFINITY_API ApplicationExitedEvent : public Event
-	{
-	public:
-		ApplicationExitedEvent();
-		~ApplicationExitedEvent();
-	};
-
-	// User events
-
-	class INFINITY_API UserCreateEvent : public Event
-	{
-	public:
-		UserCreateEvent();
-		~UserCreateEvent();
-	};
-
-	class INFINITY_API UserUpdateEvent : public Event
+	class INFINITY_API StateUpdatedEvent : public Event
 	{
 	private:
 		double m_dt;
 
 	public:
-		UserUpdateEvent(double dt);
-		~UserUpdateEvent();
-
+		StateUpdatedEvent(double dt);
+		
 		double GetDT() const;
 	};
 
-	class INFINITY_API UserRenderEvent : public Event
+	class INFINITY_API StateRenderedEvent : public Event
 	{
 	public:
-		UserRenderEvent();
-		~UserRenderEvent();
+		StateRenderedEvent();
 	};
 
-	class INFINITY_API UserDestroyEvent : public Event
+	class INFINITY_API StateExitedEvent : public Event
 	{
+	private:
+		State *m_next_state;
+
 	public:
-		UserDestroyEvent();
-		~UserDestroyEvent();
+		StateExitedEvent();
+
+		template <typename T>
+		void SetNextState()
+		{
+			static_assert(std::is_base_of<State, T>::value);
+
+			m_next_state = new T;
+		}
+
+		State *GetNextState() const;
 	};
 
 	// keyboard events
@@ -146,7 +145,6 @@ namespace Infinity
 
 	public:
 		KeyPressedEvent(KeyCode key);
-		~KeyPressedEvent();
 
 		KeyCode GetKey() const;
 	};
@@ -158,7 +156,6 @@ namespace Infinity
 
 	public:
 		KeyReleasedEvent(KeyCode key);
-		~KeyReleasedEvent();
 
 		KeyCode GetKey() const;
 	};
@@ -172,7 +169,6 @@ namespace Infinity
 
 	public:
 		MousePressedEvent(MouseCode button);
-		~MousePressedEvent();
 
 		MouseCode GetButton() const;
 	};
@@ -184,7 +180,6 @@ namespace Infinity
 
 	public:
 		MouseReleasedEvent(MouseCode button);
-		~MouseReleasedEvent();
 
 		MouseCode GetButton() const;
 	};
@@ -198,7 +193,6 @@ namespace Infinity
 
 	public:
 		CursorEnteredEvent(Resource<Window> window);
-		~CursorEnteredEvent();
 
 		Resource<Window> GetWindow() const;
 	};
@@ -210,7 +204,6 @@ namespace Infinity
 
 	public:
 		CursorExitedEvent(Resource<Window> window);
-		~CursorExitedEvent();
 
 		Resource<Window> GetWindow() const;
 	};
@@ -224,7 +217,6 @@ namespace Infinity
 
 	public:
 		CursorMovedEvent(int cx, int cy, Resource<Window> window);
-		~CursorMovedEvent();
 
 		Resource<Window> GetWindow() const;
 

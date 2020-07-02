@@ -4,8 +4,6 @@
 
 namespace Infinity
 {
-	class Window;
-
 	template <typename T>
 	class ResourceFromThis;
 
@@ -30,19 +28,19 @@ namespace Infinity
 
 	public:
 		template <typename T, typename ...Args>
-		friend Resource<T> MakeResource(Args&&... args);
+		friend Resource<T> INFINITY_API MakeResource(Args&&... args);
 
 		template <typename T1, typename T2>
-		friend Resource<T1> ResourceCast(const Resource<T2> &resource) noexcept;
+		friend Resource<T1> INFINITY_API ResourceCast(const Resource<T2> &resource) noexcept;
 
 		template <typename T1, typename T2>
-		friend Resource<T1> ResourceCast(Resource<T2> &&resource) noexcept;
+		friend Resource<T1> INFINITY_API ResourceCast(Resource<T2> &&resource) noexcept;
 
 		template <typename T1, typename T2>
-		friend Resource<T1> DynamicResourceCast(const Resource<T2> &resource) noexcept;
+		friend Resource<T1> INFINITY_API DynamicResourceCast(const Resource<T2> &resource) noexcept;
 
 		template <typename T1, typename T2>
-		friend Resource<T1> DynamicResourceCast(Resource<T2> &&resource) noexcept;
+		friend Resource<T1> INFINITY_API DynamicResourceCast(Resource<T2> &&resource) noexcept;
 
 		Resource() noexcept:
 			m_val(nullptr),
@@ -113,11 +111,11 @@ namespace Infinity
 			return *this;
 		}
 
-		const T *operator->() const { return m_val; }
-		T *operator->() { return m_val;}
+		virtual const T *operator->() const { return m_val; }
+		virtual T *operator->() { return m_val;}
 
-		const T &operator*() const { return *m_val; }
-		T &operator*() { return *m_val; }
+		virtual const T &operator*() const { return *m_val; }
+		virtual T &operator*() { return *m_val; }
 
 		explicit operator bool() const { return m_val; }
 
@@ -168,7 +166,7 @@ namespace Infinity
 	{
 		T *val = new T(std::forward<Args>(args)...);
 		typename Resource<T>::Control *control = new typename Resource<T>::Control;
-		
+
 		Resource<T> res;
 		res.m_val = val;
 		res.m_control = control;
@@ -180,7 +178,35 @@ namespace Infinity
 
 		return res;
 	}
-	
+
+	class INFINITY_API AnyResource
+	{
+	private:
+		Resource<char> m_resource; // any resource
+
+	public:
+		AnyResource():
+			m_resource()
+		{}
+
+		AnyResource(std::nullptr_t):
+			m_resource(nullptr)
+		{}
+
+		template <typename T>
+		AnyResource(const Resource<T> &resource):
+			m_resource(ResourceCast<char>(resource))
+		{}
+
+		template <typename T>
+		AnyResource(Resource<T> &&resource):
+			m_resource(ResourceCast<char>(resource))
+		{}
+
+		template <typename T>
+		Resource<T> Get() const { return ResourceCast<T>(m_resource); }
+	};
+
 	template <typename T1, typename T2>
 	inline Resource<T1> INFINITY_API ResourceCast(const Resource<T2> &resource) noexcept
 	{
@@ -238,7 +264,7 @@ namespace Infinity
 
 	protected:
 		Resource<T> GetResourceFromThis() const { return Resource<T>(m_resource_view); }
-	
+
 	public:
 		virtual ~ResourceFromThis() {}
 	};
@@ -343,7 +369,7 @@ namespace Infinity
 
 			res_view.m_control = nullptr;
 			res_view.m_val = nullptr;
-			
+
 			return *this;
 		}
 

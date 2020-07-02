@@ -10,12 +10,14 @@ namespace Infinity
 		m_cache_roll(roll),
 		m_cache_sin_roll(sin(roll)),
 		m_cache_cos_roll(cos(roll)),
-		zoom(zoom)
+		zoom(zoom),
+
+		m_aspect_ratio(1.0f)
 	{}
 
 	OrthoCamera::~OrthoCamera() {}
 
-	void OrthoCamera::Update(float aspect_ratio)
+	void OrthoCamera::Update()
 	{
 		zoom = zoom < min_zoom? min_zoom : zoom > max_zoom? max_zoom : zoom;
 
@@ -32,8 +34,10 @@ namespace Infinity
 
 		float width = 1.0f / zoom;
 
-		m_view = (aspect_ratio >= 1? MakeScale(width / aspect_ratio, width, 1.0f) : MakeScale(width, width * aspect_ratio, 1.0f)) * rotate * MakeTranslation(-position.x, -position.y, 0.0f);
+		m_view = (m_aspect_ratio >= 1? MakeScale(width / m_aspect_ratio, width, 1.0f) : MakeScale(width, width * m_aspect_ratio, 1.0f)) * rotate * MakeTranslation(-position.x, -position.y, 0.0f);
 	}
+
+	void OrthoCamera::SetAspectRatio(float aspect_ratio) { m_aspect_ratio = aspect_ratio; }
 
 	const Mat4f &OrthoCamera::GetProjectionViewMatrix() const { return m_view; }
 

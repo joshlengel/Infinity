@@ -2,11 +2,11 @@
 
 #include"Core.h"
 
-#include"application/Application.h"
-
 #include"window/Window.h"
 #include"window/WindowSystem.h"
 #include"window/Input.h"
+
+#include"state/State.h"
 
 #include"Context.h"
 #include"Model.h"

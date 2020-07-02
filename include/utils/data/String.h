@@ -49,7 +49,7 @@ namespace Infinity
 		{}
 
 		String(String &&str) noexcept:
-			m_chars(std::move(str.m_chars))
+			m_chars(std::forward<ArrayList<char>>(str.m_chars))
 		{}
 
 		String &operator=(const String &str)
@@ -60,7 +60,7 @@ namespace Infinity
 
 		String &operator=(String &&str) noexcept
 		{
-			m_chars = std::move(str.m_chars);
+			m_chars = std::forward<ArrayList<char>>(str.m_chars);
 			return *this;
 		}
 

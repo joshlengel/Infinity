@@ -29,9 +29,6 @@ namespace Infinity
 	{}
 #endif // DEBUG
 
-	Event::~Event()
-	{}
-
 	Event::EventType Event::GetType() const { return m_type; }
 	void Event::Consume() { m_consumed = true; }
 	bool Event::IsConsumed() const { return m_consumed; }
@@ -54,9 +51,6 @@ namespace Infinity
 	{}
 #endif // DEBUG
 
-	WindowResizedEvent::~WindowResizedEvent()
-	{}
-
 	Resource<Window> WindowResizedEvent::GetWindow() const { return m_window; }
 
 	unsigned int WindowResizedEvent::GetWidth() const { return m_width; }
@@ -76,106 +70,79 @@ namespace Infinity
 	{}
 #endif // DEBUG
 
-	WindowClosedEvent::~WindowClosedEvent()
-	{}
-
 	Resource<Window> WindowClosedEvent::GetWindow() const { return m_window; }
 
-	// ApplicationEnteredEvent
+	// ApplicationInterruptedEvent
 
 #ifdef DEBUG
-	ApplicationEnteredEvent::ApplicationEnteredEvent():
-		Event(EventType::ApplicationEntered, "ApplicationEnteredEvent")
+	ApplicationInterruptedEvent::ApplicationInterruptedEvent():
+		Event(EventType::ApplicationInterrupted, "ApplicationInterruptedEvent")
 	{}
 #else
-	ApplicationEnteredEvent::ApplicationEnteredEvent():
-		Event(EventType::ApplicationEntered)
+	ApplicationInterruptedEvent::ApplicationInterruptedEvent():
+		Event(EventType::ApplicationInterrupted)
+	{}
+#endif
+
+	// StateEnteredEvent
+
+#ifdef DEBUG
+	StateEnteredEvent::StateEnteredEvent(Map<String, AnyResource> &resources):
+		Event(EventType::StateEntered, "StateEnteredEvent"),
+		m_resources(resources)
+	{}
+#else
+	StateEnteredEvent::StateEnteredEvent(Map<String, AnyResource> &resources):
+		Event(EventType::StateEntered),
+		m_resources(resources)
 	{}
 #endif // DEBUG
 
-	ApplicationEnteredEvent::~ApplicationEnteredEvent()
-	{}
+	Map<String, AnyResource> &StateEnteredEvent::GetResources() const { return m_resources; }
 
-	Window::MainWindowParams &ApplicationEnteredEvent::GetMainWindowParams() { return m_params; }
-
-	// ApplicationExitedEvent
+	// StateUpdatedEvent
 
 #ifdef DEBUG
-	ApplicationExitedEvent::ApplicationExitedEvent():
-		Event(EventType::ApplicationExited, "ApplicationExitedEvent")
-	{}
-#else
-	ApplicationExitedEvent::ApplicationExitedEvent():
-		Event(EventType::ApplicationExited)
-	{}
-#endif // DEBUG
-
-	ApplicationExitedEvent::~ApplicationExitedEvent()
-	{}
-
-	// UserCreateEvent
-
-#ifdef DEBUG
-	UserCreateEvent::UserCreateEvent():
-		Event(EventType::UserCreate, "UserCreateEvent")
-	{}
-#else
-	UserCreateEvent::UserCreateEvent():
-		Event(EventType::UserCreate)
-	{}
-#endif // DEBUG
-
-	UserCreateEvent::~UserCreateEvent()
-	{}
-
-	// UserUpdateEvent
-
-#ifdef DEBUG
-	UserUpdateEvent::UserUpdateEvent(double dt):
-		Event(EventType::UserUpdate, "UserUpdateEvent"),
+	StateUpdatedEvent::StateUpdatedEvent(double dt):
+		Event(EventType::StateUpdated, "StateUpdatedEvent"),
 		m_dt(dt)
 	{}
 #else
-	UserUpdateEvent::UserUpdateEvent(double dt):
-		Event(EventType::UserUpdate),
+	StateUpdatedEvent::StateUpdatedEvent(double dt):
+		Event(EventType::StateUpdated),
 		m_dt(dt)
 	{}
 #endif // DEBUG
 
-	UserUpdateEvent::~UserUpdateEvent()
-	{}
+	double StateUpdatedEvent::GetDT() const { return m_dt; }
 
-	double UserUpdateEvent::GetDT() const { return m_dt; }
-
-	// UserRenderEvent
+	// StateRenderedEvent
 
 #ifdef DEBUG
-	UserRenderEvent::UserRenderEvent():
-		Event(EventType::UserRender, "UserRenderEvent")
+	StateRenderedEvent::StateRenderedEvent():
+		Event(EventType::StateRendered, "StateRenderedEvent")
 	{}
 #else
-	UserRenderEvent::UserRenderEvent():
-		Event(EventType::UserRender)
+	StateRenderedEvent::StateRenderedEvent():
+		Event(EventType::StateRendered)
 	{}
 #endif // DEBUG
 
-	UserRenderEvent::~UserRenderEvent()
-	{}
-
-	// UserDestroyEvent
+	// StateExitedEvent
 
 #ifdef DEBUG
-	UserDestroyEvent::UserDestroyEvent():
-		Event(EventType::UserDestroy, "UserDestroyEvent")
+	StateExitedEvent::StateExitedEvent():
+		Event(EventType::StateExited, "StateExitedEvent"),
+		m_next_state(nullptr)
 	{}
 #else
-	UserDestroyEvent::UserDestroyEvent():
-		Event(EventType::UserDestroy)
+	StateExitedEvent::StateExitedEvent():
+		Event(EventType::StateExited),
+		m_next_state(nullptr)
 	{}
 #endif // DEBUG
 
-	UserDestroyEvent::~UserDestroyEvent()
-	{}
+	State *StateExitedEvent::GetNextState() const { return m_next_state; }
 
 	// KeyPressedEvent
 
@@ -190,9 +157,6 @@ namespace Infinity
 		m_key(key)
 	{}
 #endif // DEBUG
-
-	KeyPressedEvent::~KeyPressedEvent()
-	{}
 
 	KeyCode KeyPressedEvent::GetKey() const { return m_key; }
 
@@ -210,9 +174,6 @@ namespace Infinity
 	{}
 #endif // DEBUG
 
-	KeyReleasedEvent::~KeyReleasedEvent()
-	{}
-
 	KeyCode KeyReleasedEvent::GetKey() const { return m_key; }
 
 	// MousePressedEvent
@@ -229,9 +190,6 @@ namespace Infinity
 	{}
 #endif // DEBUG
 	
-	MousePressedEvent::~MousePressedEvent()
-	{}
-
 	MouseCode MousePressedEvent::GetButton() const { return m_button; }
 
 	// MouseReleasedEvent
@@ -247,9 +205,6 @@ namespace Infinity
 		m_button(button)
 	{}
 #endif // DEBUG
-
-	MouseReleasedEvent::~MouseReleasedEvent()
-	{}
 
 	MouseCode MouseReleasedEvent::GetButton() const { return m_button; }
 
@@ -267,9 +222,6 @@ namespace Infinity
 	{}
 #endif // DEBUG
 
-	CursorEnteredEvent::~CursorEnteredEvent()
-	{}
-
 	Resource<Window> CursorEnteredEvent::GetWindow() const { return m_window; }
 
 	// CursorExitedEvent
@@ -285,9 +237,6 @@ namespace Infinity
 		m_window(window)
 	{}
 #endif // DEBUG
-
-	CursorExitedEvent::~CursorExitedEvent()
-	{}
 
 	Resource<Window> CursorExitedEvent::GetWindow() const { return m_window; }
 
@@ -308,9 +257,6 @@ namespace Infinity
 		m_cy(cy)
 	{}
 #endif // DEBUG
-
-	CursorMovedEvent::~CursorMovedEvent()
-	{}
 
 	Resource<Window> CursorMovedEvent::GetWindow() const { return m_window; }
 

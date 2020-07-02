@@ -30,6 +30,8 @@ namespace Infinity
 			}
 			else
 			{
+				m_capacity = STACK_DATA_LENGTH;
+				m_prev_capacity = STACK_DATA_LENGTH;
 				m_data = m_stack_data;
 			}
 		}
@@ -183,6 +185,14 @@ namespace Infinity
 
 		const T &operator[](unsigned int i) const { return m_data[i]; }
 		T &operator[](unsigned int i) { return m_data[i]; }
+
+		void Expand(unsigned int size)
+		{
+			m_size = size;
+			
+			if (size > m_capacity)
+				EnsureCapacity(size - m_capacity);
+		}
 
 		void Add(const T &elem)
 		{

@@ -17,6 +17,7 @@ namespace Infinity
 	private:
 		Mat4f m_view;
 
+		float m_aspect_ratio;
 		float m_cache_roll, m_cache_sin_roll, m_cache_cos_roll;
 
 	public:
@@ -29,7 +30,8 @@ namespace Infinity
 		OrthoCamera(const Vec2f &position = { 0, 0 }, float roll = 0.0f, float zoom = 1.0f);
 		~OrthoCamera();
 
-		void Update(float aspect_ratio);
+		void Update();
+		void SetAspectRatio(float aspect_ratio);
 		const Mat4f &GetProjectionViewMatrix() const override;
 
 		void MoveForward(float speed);

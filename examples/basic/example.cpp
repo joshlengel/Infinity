@@ -1,14 +1,13 @@
 #define INFINITY_ENTRY_POINT
 #include <Infinity.h>
 
-class Example : public Infinity::Application
+class StartState : public Infinity::State
 {
 public:
-	Example() {}
-	~Example() {}
+	INFINITY_DEFINE_STATE_FUNCTIONS()
 };
 
-Infinity::Application *Infinity::CreateApplication()
+void Infinity::SetClientStartState()
 {
-	return new Example;
+	Infinity::SetStartState<StartState>();
 }

@@ -14,6 +14,11 @@
 
 namespace Infinity
 {
+	namespace _Impl
+	{
+		extern Window::MainWindowParams main_window_params;
+	}
+
 	BaseApplication *BaseApplication::s_application;
 
 	BaseApplication::BaseApplication(State *start_state):
@@ -77,12 +82,14 @@ namespace Infinity
 			return;
 		}
 
+		m_window_system.Init();
+
 		AddEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(BaseApplication::EventHandlerFunc));
 
 		StateMachine state_machine(m_start_state);
 		state_machine.Start();
 
-		if (!m_window_system.InitMainWindow(Window::MainWindowParams()))
+		if (!m_window_system.InitMainWindow(_Impl::main_window_params))
 		{
 			INFINITY_CORE_ERROR("Error initializing window system");
 			return;
@@ -92,7 +99,8 @@ namespace Infinity
 
 		DispatchEvents();
 
-		m_window_system.GetMainWindow()->Show();
+		if (_Impl::main_window_params.auto_show)
+			m_window_system.GetMainWindow()->Show();
 
 		INFINITY_CORE_TRACE("Application initialized");
 
@@ -114,7 +122,9 @@ namespace Infinity
 
 			DispatchEvents();
 
-			m_window_system.GetMainWindow()->SwapBuffers();
+			if (ResourceCast<BaseWindow>(m_window_system.GetMainWindow())->AutoSwapBuffers())
+				m_window_system.GetMainWindow()->SwapBuffers();
+			
 			for (Resource<Window> window : m_window_system.GetChildWindows())
 			{
 				if (ResourceCast<BaseWindow>(window)->AutoSwapBuffers()) window->SwapBuffers();

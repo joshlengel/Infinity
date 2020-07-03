@@ -788,34 +788,38 @@ namespace Infinity
 	void WindowsWindow::HotKeyHandler()
 	{
 		Resource<WindowsWindow> window = ResourceCast<WindowsWindow>(BaseApplication::GetApplication()->GetWindowSystem().GetMainWindow());
-		window->m_fullscreen = !window->m_fullscreen;
-
-		if (window->m_fullscreen)
+		
+		if (window->m_enable_alt_enter_fullscreen)
 		{
-			for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
+			window->m_fullscreen = !window->m_fullscreen;
+
+			if (window->m_fullscreen)
 			{
-				ShowWindow(ResourceCast<WindowsWindow>(window)->m_window_handle, SW_HIDE);
-			}
-
-			window->EnterFullscreenMode();
-
-			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
-		}
-		else
-		{
-			window->ExitFullscreenMode();
-
-			for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
-			{
-				Resource<WindowsWindow> wwin = ResourceCast<WindowsWindow>(window);
-
-				if (wwin->m_showing)
+				for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
 				{
-					ShowWindow(wwin->m_window_handle, SW_SHOW);
+					ShowWindow(ResourceCast<WindowsWindow>(window)->m_window_handle, SW_HIDE);
 				}
-			}
 
-			BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
+				window->EnterFullscreenMode();
+
+				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
+			}
+			else
+			{
+				window->ExitFullscreenMode();
+
+				for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
+				{
+					Resource<WindowsWindow> wwin = ResourceCast<WindowsWindow>(window);
+
+					if (wwin->m_showing)
+					{
+						ShowWindow(wwin->m_window_handle, SW_SHOW);
+					}
+				}
+
+				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
+			}
 		}
 	}
 
@@ -896,7 +900,7 @@ namespace Infinity
 			return 0;
 		}
 		case WM_CLOSE:
-			BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window->GetBaseResource()));
+			BaseApplication::GetApplication()->PushEvent(new AttemptWindowClosedEvent(window->GetBaseResource()));
 			return 0;
 
 		case WM_INPUT:

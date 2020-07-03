@@ -2,16 +2,20 @@
 
 #include"Core.h"
 
+#include<stdexcept>
+
 namespace Infinity
 {
 	template <typename T>
 	class ResourceFromThis;
 
+	class AnyResource;
+
 	template <typename T>
 	class ResourceView;
 
 	template <typename T>
-	class INFINITY_API Resource
+	class Resource
 	{
 	private:
 		T *m_val;
@@ -24,23 +28,24 @@ namespace Infinity
 
 		Control *m_control;
 
+		friend AnyResource;
 		friend ResourceView<T>;
 
 	public:
 		template <typename T, typename ...Args>
-		friend Resource<T> INFINITY_API MakeResource(Args&&... args);
+		friend Resource<T> MakeResource(Args&&... args);
 
 		template <typename T1, typename T2>
-		friend Resource<T1> INFINITY_API ResourceCast(const Resource<T2> &resource) noexcept;
+		friend Resource<T1> ResourceCast(const Resource<T2> &resource) noexcept;
 
 		template <typename T1, typename T2>
-		friend Resource<T1> INFINITY_API ResourceCast(Resource<T2> &&resource) noexcept;
+		friend Resource<T1> ResourceCast(Resource<T2> &&resource) noexcept;
 
 		template <typename T1, typename T2>
-		friend Resource<T1> INFINITY_API DynamicResourceCast(const Resource<T2> &resource) noexcept;
+		friend Resource<T1> DynamicResourceCast(const Resource<T2> &resource) noexcept;
 
 		template <typename T1, typename T2>
-		friend Resource<T1> INFINITY_API DynamicResourceCast(Resource<T2> &&resource) noexcept;
+		friend Resource<T1> DynamicResourceCast(Resource<T2> &&resource) noexcept;
 
 		Resource() noexcept:
 			m_val(nullptr),
@@ -81,6 +86,29 @@ namespace Infinity
 			}
 		}
 
+		Resource(const AnyResource &resource):
+			m_val(nullptr),
+			m_control(nullptr)
+		{
+			*this = resource.Get<T>();
+		}
+
+		Resource(AnyResource &&resource):
+			m_val(nullptr),
+			m_control(nullptr)
+		{
+			*this = resource.Get<T>();
+
+			if (m_control)
+			{
+				--m_control->ref_count;
+			}
+
+			resource.m_val = nullptr;
+			resource.m_control = nullptr;
+			resource.m_deleter = nullptr;
+		}
+
 		~Resource()
 		{
 			TryRelease();
@@ -105,6 +133,16 @@ namespace Infinity
 			return *this;
 		}
 
+		Resource &operator=(const AnyResource &resource)
+		{
+			return *this = Resource(resource);
+		}
+
+		Resource &operator=(AnyResource &&resource)
+		{
+			return *this = Resource(std::forward<AnyResource>(resource));
+		}
+
 		Resource &operator=(std::nullptr_t)
 		{
 			TryRelease();
@@ -118,6 +156,8 @@ namespace Infinity
 		virtual T &operator*() { return *m_val; }
 
 		explicit operator bool() const { return m_val; }
+
+		bool operator!() const { return !m_val; }
 
 		bool operator==(const Resource &resource) const { return m_val == resource.m_val; }
 		bool operator!=(const Resource &resource) const { return m_val != resource.m_val; }
@@ -162,7 +202,7 @@ namespace Infinity
 	};
 
 	template <typename T, typename ...Args>
-	inline Resource<T> INFINITY_API MakeResource(Args&&... args)
+	inline Resource<T> MakeResource(Args&&... args)
 	{
 		T *val = new T(std::forward<Args>(args)...);
 		typename Resource<T>::Control *control = new typename Resource<T>::Control;
@@ -179,36 +219,257 @@ namespace Infinity
 		return res;
 	}
 
-	class INFINITY_API AnyResource
+	class WrongAnyResourceException : public std::runtime_error
+	{
+	public:
+		WrongAnyResourceException():
+			std::runtime_error("Any resource was created with different type. AnyResource::Get<T> must be called with correct type")
+		{}
+	};
+
+	class AnyResource
 	{
 	private:
-		Resource<char> m_resource; // any resource
+		void *m_val; // any resource
+
+		Resource<char>::Control *m_control;
+
+		void (*m_deleter)(void *val, void *control);
+
+		template <typename T>
+		struct Deleter
+		{
+			static void Delete(void *val, void *control)
+			{
+				delete (T*)val;
+				delete (Resource<T>::Control*)control;
+			}
+		};
+
+		template <typename T>
+		friend class Resource;
 
 	public:
-		AnyResource():
-			m_resource()
+		AnyResource() noexcept:
+			m_val(nullptr),
+			m_control(nullptr),
+			m_deleter(nullptr)
 		{}
 
-		AnyResource(std::nullptr_t):
-			m_resource(nullptr)
+		AnyResource(std::nullptr_t) noexcept:
+			m_val(nullptr),
+			m_control(nullptr),
+			m_deleter(nullptr)
 		{}
+
+		AnyResource(const AnyResource &resource):
+			m_val(resource.m_val),
+			m_control(resource.m_control),
+			m_deleter(resource.m_deleter)
+		{
+			if (m_control)
+			{
+				++m_control->ref_count;
+			}
+		}
+
+		AnyResource(AnyResource &&resource) noexcept:
+			m_val(resource.m_val),
+			m_control(resource.m_control),
+			m_deleter(resource.m_deleter)
+		{
+			resource.m_val = nullptr;
+			resource.m_control = nullptr;
+			resource.m_deleter = nullptr;
+		}
 
 		template <typename T>
 		AnyResource(const Resource<T> &resource):
-			m_resource(ResourceCast<char>(resource))
-		{}
+			m_val(resource.m_val),
+			m_control((Resource<char>::Control*)resource.m_control),
+			m_deleter(&Deleter<T>::Delete)
+		{
+			if (resource)
+			{
+				++m_control->ref_count;
+			}
+		}
 
 		template <typename T>
-		AnyResource(Resource<T> &&resource):
-			m_resource(ResourceCast<char>(resource))
-		{}
+		AnyResource(Resource<T> &&resource) noexcept:
+			m_val(resource.m_val),
+			m_control((Resource<char>::Control*)resource.m_control),
+			m_deleter(&Deleter<T>::Delete)
+		{
+			resource.m_val = nullptr;
+			resource.m_control = nullptr;
+		}
 
 		template <typename T>
-		Resource<T> Get() const { return ResourceCast<T>(m_resource); }
+		AnyResource &operator=(const Resource<T> &resource)
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (!m_control->ref_count)
+				{
+					m_deleter(m_val, m_control);
+				}
+			}
+
+			m_val = resource.m_val;
+			m_control = (Resource<char>::Control*)resource.m_control;
+			m_deleter = &Deleter<T>::Delete;
+
+			if (m_control)
+			{
+				++m_control->ref_count;
+			}
+
+			return *this;
+		}
+
+		template <typename T>
+		AnyResource &operator=(Resource<T> &&resource)
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (!m_control->ref_count)
+				{
+					m_deleter(m_val, m_control);
+				}
+			}
+
+			m_val = resource.m_val;
+			m_control = (Resource<char>::Control*)resource.m_control;
+			m_deleter = &Deleter<T>::Delete;
+
+			resource.m_val = nullptr;
+			resource.m_control = nullptr;
+
+			return *this;
+		}
+
+		AnyResource &operator=(const AnyResource &resource)
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (!m_control->ref_count)
+				{
+					m_deleter(m_val, m_control);
+				}
+			}
+
+			m_val = resource.m_val;
+			m_control = (Resource<char>::Control*)resource.m_control;
+			m_deleter = resource.m_deleter;
+
+			if (m_control)
+			{
+				++m_control->ref_count;
+			}
+
+			return *this;
+		}
+
+		AnyResource &operator=(AnyResource &&resource)
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (!m_control->ref_count)
+				{
+					m_deleter(m_val, m_control);
+				}
+			}
+
+			m_val = resource.m_val;
+			m_control = (Resource<char>::Control*)resource.m_control;
+			m_deleter = resource.m_deleter;
+
+			resource.m_val = nullptr;
+			resource.m_control = nullptr;
+			resource.m_deleter = nullptr;
+
+			return *this;
+		}
+
+		AnyResource &operator=(std::nullptr_t)
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (!m_control->ref_count)
+				{
+					m_deleter(m_val, m_control);
+				}
+
+				m_val = nullptr;
+				m_control = nullptr;
+				m_deleter = nullptr;
+			}
+
+			return *this;
+		}
+
+		~AnyResource()
+		{
+			if (m_control)
+			{
+				--m_control->ref_count;
+
+				if (!m_control->ref_count)
+				{
+					m_deleter(m_val, m_control);
+				}
+			}
+		}
+
+		template <typename T>
+		Resource<T> Get() const
+		{
+			if (!m_control) return Resource<T>();
+
+			if (&Deleter<T>::Delete == m_deleter)
+			{
+				Resource<T> res;
+				res.m_val = (T*)m_val;
+				res.m_control = (Resource<T>::Control*)m_control;
+		
+				++m_control->ref_count;
+
+				return res;
+			}
+			else
+			{
+				throw WrongAnyResourceException();
+			}
+		}
+
+		template <typename T>
+		operator Resource<T>() const { return Get<T>(); }
+
+		explicit operator bool() const { return !m_val; }
+
+		bool operator!() const { return !m_val; }
+
+		bool operator==(const AnyResource &resource) const { return m_val == resource.m_val; }
+		bool operator!=(const AnyResource &resource) const { return m_val != resource.m_val; }
+		bool operator>(const AnyResource &resource) const { return m_val > resource.m_val; }
+		bool operator<(const AnyResource &resource) const { return m_val < resource.m_val; }
+		bool operator>=(const AnyResource &resource) const { return m_val >= resource.m_val; }
+		bool operator<=(const AnyResource &resource) const { return m_val <= resource.m_val; }
 	};
 
 	template <typename T1, typename T2>
-	inline Resource<T1> INFINITY_API ResourceCast(const Resource<T2> &resource) noexcept
+	inline Resource<T1> ResourceCast(const Resource<T2> &resource) noexcept
 	{
 		Resource<T1> res;
 		res.m_val = (T1*)resource.m_val;
@@ -218,7 +479,7 @@ namespace Infinity
 	}
 
 	template <typename T1, typename T2>
-	inline Resource<T1> INFINITY_API ResourceCast(Resource<T2> &&resource) noexcept
+	inline Resource<T1> ResourceCast(Resource<T2> &&resource) noexcept
 	{
 		Resource<T1> res;
 		res.m_val = (T1*)resource.m_val;
@@ -229,7 +490,7 @@ namespace Infinity
 	}
 
 	template <typename T1, typename T2>
-	inline Resource<T1> INFINITY_API DynamicResourceCast(const Resource<T2> &resource) noexcept
+	inline Resource<T1> DynamicResourceCast(const Resource<T2> &resource) noexcept
 	{
 		if (!dynamic_cast<T1*>(resource.m_val)) return Resource<T1>();
 
@@ -241,7 +502,7 @@ namespace Infinity
 	}
 
 	template <typename T1, typename T2>
-	inline Resource<T1> INFINITY_API DynamicResourceCast(Resource<T2> &&resource) noexcept
+	inline Resource<T1> DynamicResourceCast(Resource<T2> &&resource) noexcept
 	{
 		if (!dynamic_cast<T1*>(resource.m_val)) return Resource<T1>();
 
@@ -270,7 +531,7 @@ namespace Infinity
 	};
 
 	template <typename T>
-	class INFINITY_API ResourceView
+	class ResourceView
 	{
 	private:
 		typename Resource<T>::Control *m_control;

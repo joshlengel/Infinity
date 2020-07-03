@@ -20,7 +20,7 @@ namespace Infinity
 		enum class EventType : unsigned char
 		{
 			// Handleable by client
-			WindowResized, WindowClosed,
+			WindowResized, WindowClosed, AttemptWindowClosed,
 			ApplicationInterrupted,
 			StateEntered, StateUpdated, StateRendered, StateExited,
 			KeyPressed, KeyReleased, MousePressed, MouseReleased,
@@ -79,6 +79,21 @@ namespace Infinity
 		Resource<Window> GetWindow() const;
 	};
 
+	class INFINITY_API AttemptWindowClosedEvent : public Event
+	{
+	private:
+		Resource<Window> m_window;
+		bool m_allow_close;
+
+	public:
+		AttemptWindowClosedEvent(Resource<Window> window);
+
+		Resource<Window> GetWindow() const;
+
+		void AllowClose(bool allow_close = true);
+		bool AllowedClose() const;
+	};
+
 	// Application events
 
 	class INFINITY_API ApplicationInterruptedEvent : public Event
@@ -92,12 +107,12 @@ namespace Infinity
 	class INFINITY_API StateEnteredEvent : public Event
 	{
 	private:
-		Map<String, AnyResource> &m_resources;
+		const Map<String, AnyResource> &m_resources;
 
 	public:
-		StateEnteredEvent(Map<String, AnyResource> &resources);
+		StateEnteredEvent(const Map<String, AnyResource> &resources);
 		
-		Map<String, AnyResource> &GetResources() const;
+		const Map<String, AnyResource> &GetResources() const;
 	};
 
 	class INFINITY_API StateUpdatedEvent : public Event
@@ -120,10 +135,13 @@ namespace Infinity
 	class INFINITY_API StateExitedEvent : public Event
 	{
 	private:
+		Map<String, AnyResource> &m_resources;
 		State *m_next_state;
 
 	public:
-		StateExitedEvent();
+		StateExitedEvent(Map<String, AnyResource> &resources);
+
+		Map<String, AnyResource> &GetResources() const;
 
 		template <typename T>
 		void SetNextState()

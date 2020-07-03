@@ -2,14 +2,20 @@
 
 #include"state/State.h"
 
+#include"window/Window.h"
+
 namespace Infinity
 {
 	namespace _Impl
 	{
+		extern INFINITY_API Window::MainWindowParams main_window_params;
+
 		extern INFINITY_API State *start_state;
 
-		inline void StartStateDeleter(State *state) { delete state; }
+		inline void __cdecl StartStateDeleter(State *state) { delete state; }
 	}
+
+	inline Window::MainWindowParams &GetMainWindowParams() { return _Impl::main_window_params; }
 
 	template <typename T>
 	inline void SetStartState()

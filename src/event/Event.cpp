@@ -72,6 +72,27 @@ namespace Infinity
 
 	Resource<Window> WindowClosedEvent::GetWindow() const { return m_window; }
 
+	// AttemptWindowClosedEvent
+
+#ifdef DEBUG
+	AttemptWindowClosedEvent::AttemptWindowClosedEvent(Resource<Window> window):
+		Event(EventType::AttemptWindowClosed, "AttemptWindowClosedEvent"),
+		m_window(window),
+		m_allow_close(true)
+	{}
+#else
+	AttemptWindowClosedEvent::AttemptWindowClosedEvent(Resource<Window> window):
+		Event(EventType::AttemptWindowClosed),
+		m_window(window),
+		m_allow_close(true)
+	{}
+#endif // DEBUG
+
+	Resource<Window> AttemptWindowClosedEvent::GetWindow() const { return m_window; }
+
+	void AttemptWindowClosedEvent::AllowClose(bool allow_close) { m_allow_close = allow_close; }
+	bool AttemptWindowClosedEvent::AllowedClose() const { return m_allow_close; }
+
 	// ApplicationInterruptedEvent
 
 #ifdef DEBUG
@@ -87,18 +108,18 @@ namespace Infinity
 	// StateEnteredEvent
 
 #ifdef DEBUG
-	StateEnteredEvent::StateEnteredEvent(Map<String, AnyResource> &resources):
+	StateEnteredEvent::StateEnteredEvent(const Map<String, AnyResource> &resources):
 		Event(EventType::StateEntered, "StateEnteredEvent"),
 		m_resources(resources)
 	{}
 #else
-	StateEnteredEvent::StateEnteredEvent(Map<String, AnyResource> &resources):
+	StateEnteredEvent::StateEnteredEvent(const Map<String, AnyResource> &resources):
 		Event(EventType::StateEntered),
 		m_resources(resources)
 	{}
 #endif // DEBUG
 
-	Map<String, AnyResource> &StateEnteredEvent::GetResources() const { return m_resources; }
+	const Map<String, AnyResource> &StateEnteredEvent::GetResources() const { return m_resources; }
 
 	// StateUpdatedEvent
 
@@ -131,16 +152,20 @@ namespace Infinity
 	// StateExitedEvent
 
 #ifdef DEBUG
-	StateExitedEvent::StateExitedEvent():
+	StateExitedEvent::StateExitedEvent(Map<String, AnyResource> &resources):
 		Event(EventType::StateExited, "StateExitedEvent"),
+		m_resources(resources),
 		m_next_state(nullptr)
 	{}
 #else
-	StateExitedEvent::StateExitedEvent():
+	StateExitedEvent::StateExitedEvent(Map<String, AnyResource> &resources):
 		Event(EventType::StateExited),
+		m_resources(resources),
 		m_next_state(nullptr)
 	{}
 #endif // DEBUG
+
+	Map<String, AnyResource> &StateExitedEvent::GetResources() const { return m_resources; }
 
 	State *StateExitedEvent::GetNextState() const { return m_next_state; }
 

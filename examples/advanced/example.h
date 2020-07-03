@@ -1,15 +1,19 @@
 #include <Infinity.h>
 
-class Example : public Infinity::Application
+class StartState : public Infinity::State
 {
 private:
-	Infinity::Renderer2D *m_renderer;
+	Infinity::Resource<Infinity::Renderer2D> m_renderer;
 
 public:
-	Example() {}
-	~Example() {}
+	INFINITY_DECLARE_STATE_FUNCTIONS()
+};
 
-	void OnUserCreate(Infinity::UserCreateEvent *event) override;
-	void OnUserRender(Infinity::UserRenderEvent *event) override;
-	void OnUserDestroy(Infinity::UserDestroyEvent *event) override;
+class EndState : public Infinity::State
+{
+private:
+	Infinity::Resource<Infinity::Renderer2D> m_renderer;
+
+public:
+	INFINITY_DECLARE_STATE_FUNCTIONS()
 };

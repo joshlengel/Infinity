@@ -11,14 +11,21 @@
 
 namespace Infinity
 {
+	class BaseApplication;
+
 	class INFINITY_API WindowSystem
 	{
 	private:
 		Resource<Window> m_main_window;
 		mutable ArrayList<Resource<Window>> m_child_windows;
 
-	public:
 		WindowSystem();
+
+		void Init();
+
+	public:
+		friend BaseApplication;
+
 		~WindowSystem();
 
 		bool InitMainWindow(const Window::MainWindowParams &params);
@@ -32,4 +39,6 @@ namespace Infinity
 	private:
 		void EventHandler(Event &event);
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API ArrayList<Resource<Window>>;
 }

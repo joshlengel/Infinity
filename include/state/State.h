@@ -10,6 +10,16 @@
 
 #include"window/WindowSystem.h"
 
+#define INFINITY_DECLARE_STATE_FUNCTIONS() void OnStateEntered(Infinity::StateEnteredEvent &event) override;\
+	void OnStateUpdated(Infinity::StateUpdatedEvent &event) override;\
+	void OnStateRendered(Infinity::StateRenderedEvent &event) override;\
+	void OnStateExited(Infinity::StateExitedEvent &event) override;
+
+#define INFINITY_DEFINE_STATE_FUNCTIONS() void OnStateEntered(Infinity::StateEnteredEvent &event) override {}\
+	void OnStateUpdated(Infinity::StateUpdatedEvent &event) override {}\
+	void OnStateRendered(Infinity::StateRenderedEvent &event) override {}\
+	void OnStateExited(Infinity::StateExitedEvent &event) override {}
+
 namespace Infinity
 {
 	class StateMachine;
@@ -39,6 +49,7 @@ namespace Infinity
 
 		virtual void OnWindowResized(WindowResizedEvent &event) {}
 		virtual void OnWindowClosed(WindowClosedEvent &event) {}
+		virtual void OnAttemptWindowClosed(AttemptWindowClosedEvent &event) {}
 
 		virtual void OnKeyPressed(KeyPressedEvent &event) {}
 		virtual void OnKeyReleased(KeyReleasedEvent &event) {}

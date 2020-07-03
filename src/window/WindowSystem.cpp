@@ -17,6 +17,11 @@ namespace Infinity
 	WindowSystem::~WindowSystem()
 	{}
 
+	void WindowSystem::Init()
+	{
+		BaseApplication::GetApplication()->AddEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(WindowSystem::EventHandler));
+	}
+
 	bool WindowSystem::InitMainWindow(const Window::MainWindowParams &params)
 	{
 		BaseWindow::BaseWindowParams bw_params;
@@ -41,8 +46,6 @@ namespace Infinity
 			INFINITY_CORE_ERROR("Error initializing main window");
 			return false;
 		}
-
-		BaseApplication::GetApplication()->AddEventHandler(INFINITY_TO_STATIC_EVENT_FUNC(WindowSystem::EventHandler));
 
 		return true;
 	}
@@ -82,7 +85,8 @@ namespace Infinity
 
 	void WindowSystem::DestroyChildWindow(Resource<Window> window) const
 	{
-		Remove(m_child_windows, window);
+		if (Contains(m_child_windows, window))
+			BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(window));
 	}
 
 	void WindowSystem::EventHandler(Event &event)

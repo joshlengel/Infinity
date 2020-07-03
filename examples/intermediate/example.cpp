@@ -3,14 +3,23 @@
 
 #include "example.h"
 
-void Example::OnUserCreate(Infinity::UserCreateEvent *event)
+void StartState::OnStateEntered(Infinity::StateEnteredEvent &event)
 {
-	const Infinity::Context *context = event->GetContext();
+	auto context = Infinity::Window::GetContext();
 	context->SetClearColor(1.0f, 0.0f, 0.0f, 1.0f); // Set background color to red
 }
 
-void Example::OnUserRender(Infinity::UserRenderEvent *event)
+void StartState::OnStateUpdated(Infinity::StateUpdatedEvent &event) {}
+
+void StartState::OnStateRendered(Infinity::StateRenderedEvent &event)
 {
-	const Infinity::Context *context = event->GetContext();
+	auto context = Infinity::Window::GetContext();
 	context->Clear(); // Clear screen
+}
+
+void StartState::OnStateExited(Infinity::StateExitedEvent &event) {}
+
+void Infinity::SetClientStartState()
+{
+	Infinity::SetStartState<StartState>();
 }

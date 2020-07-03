@@ -5,9 +5,18 @@
 #include"ArrayList.h"
 
 #include<utility>
+#include<stdexcept>
 
 namespace Infinity
 {
+	class InvalidMapKeyException : public std::runtime_error
+	{
+	public:
+		InvalidMapKeyException():
+			std::runtime_error("Invalid key specified to Infinity::Map")
+		{};
+	};
+
 	template <typename Key, typename Value>
 	class INFINITY_API Map
 	{
@@ -34,9 +43,19 @@ namespace Infinity
 			m_entries(map.m_entries)
 		{}
 
-		Map(Map &&map):
-			m_entries(std::move(map.m_entries))
+		Map(Map &&map) noexcept:
+			m_entries(std::forward<ArrayList<typename Map<Key, Value>::Entry>>(map.m_entries))
 		{}
+
+		const Value &operator[](const Key &key) const
+		{
+			for (const Entry &e : m_entries)
+			{
+				if (e.key == key) return e.value;
+			}
+
+			throw InvalidMapKeyException();
+		}
 
 		Value &operator[](const Key &key)
 		{

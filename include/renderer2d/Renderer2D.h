@@ -32,14 +32,15 @@ namespace Infinity
 		};
 
 	private:
+		template <typename T, typename ...Args>
+		friend Resource<T> MakeResource<T>(Args&&... args);
+
 		struct Vertex
 		{
 			Vec2f position;
 			Vec4f color;
 			Vec2f tex_coords;
 		};
-
-	private:
 
 		struct RenderModel
 		{
@@ -74,8 +75,9 @@ namespace Infinity
 
 		Map<Resource<Texture2D>, Batch*> m_batches;
 
-	public:
 		Renderer2D();
+	
+	public:
 		~Renderer2D();
 
 		bool Init();
@@ -83,6 +85,8 @@ namespace Infinity
 		void StartScene(const Camera *camera);
 		void DrawQuad(const QuadParams &quad);
 		void EndScene();
+
+		static Resource<Renderer2D> CreateRenderer2D();
 
 	private:
 		void Flush(Resource<Texture2D> texture, Batch *batch);

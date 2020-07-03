@@ -35,11 +35,6 @@ namespace Infinity
 			m_chars.Add('\0');
 		}
 
-		template <unsigned int Length>
-		String(const char (&str)[Length]):
-			m_chars(str, Length)
-		{}
-
 		String(const char *str):
 			m_chars(str, Length(str) + 1)
 		{}

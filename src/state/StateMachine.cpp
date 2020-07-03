@@ -24,12 +24,13 @@ namespace Infinity
 	{
 		if (m_current_state->m_exit)
 		{
-			BaseApplication::GetApplication()->PushEvent(new StateExitedEvent);
-			BaseApplication::GetApplication()->PushEvent(new StateEnteredEvent(m_resources));
+			BaseApplication::GetApplication()->PushEvent(new StateExitedEvent(m_resources));
 		}
-
-		BaseApplication::GetApplication()->PushEvent(new StateUpdatedEvent(dt));
-		BaseApplication::GetApplication()->PushEvent(new StateRenderedEvent);
+		else
+		{
+			BaseApplication::GetApplication()->PushEvent(new StateUpdatedEvent(dt));
+			BaseApplication::GetApplication()->PushEvent(new StateRenderedEvent);
+		}
 	}
 
 	bool StateMachine::ShouldExit() const { return m_current_state == nullptr; }
@@ -39,18 +40,18 @@ namespace Infinity
 		switch (event.GetType())
 		{
 		case Event::EventType::StateEntered:
-			if (m_current_state)
-				m_current_state->OnStateEntered((StateEnteredEvent&)event);
+			m_current_state->OnStateEntered((StateEnteredEvent&)event);
+
+			m_resources.Clear();
+
 			break;
 
 		case Event::EventType::StateUpdated:
-			if (m_current_state)
-				m_current_state->OnStateUpdated((StateUpdatedEvent&)event);
+			m_current_state->OnStateUpdated((StateUpdatedEvent&)event);
 			break;
 
 		case Event::EventType::StateRendered:
-			if (m_current_state)
-				m_current_state->OnStateRendered((StateRenderedEvent&)event);
+			m_current_state->OnStateRendered((StateRenderedEvent&)event);
 			break;
 
 		case Event::EventType::StateExited:
@@ -65,14 +66,18 @@ namespace Infinity
 			m_current_state = see.GetNextState();
 
 			if (m_current_state)
+			{
 				m_current_state->m_deleter = DefaultStateDeleter;
+
+				BaseApplication::GetApplication()->PushEvent(new StateEnteredEvent(m_resources));
+			}
 
 			break;
 		}
 		case Event::EventType::ApplicationInterrupted:
 			if (m_current_state)
 			{
-				StateExitedEvent see;
+				StateExitedEvent see(m_resources);
 				m_current_state->OnStateExited(see);
 
 				if (see.GetNextState()) delete see.GetNextState();
@@ -89,6 +94,19 @@ namespace Infinity
 		case Event::EventType::WindowClosed:
 			if (m_current_state)
 				m_current_state->OnWindowClosed((WindowClosedEvent&)event);
+			break;
+
+		case Event::EventType::AttemptWindowClosed:
+			if (m_current_state)
+			{
+				AttemptWindowClosedEvent &awce = (AttemptWindowClosedEvent&)event;
+				m_current_state->OnAttemptWindowClosed(awce);
+				
+				if (awce.AllowedClose())
+				{
+					BaseApplication::GetApplication()->PushEvent(new WindowClosedEvent(awce.GetWindow()));
+				}
+			}
 			break;
 
 		case Event::EventType::KeyPressed:

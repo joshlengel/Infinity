@@ -29,4 +29,6 @@ namespace Infinity
 	private:
 		void EventHandler(Event &event);
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API Map<String, AnyResource>;
 }

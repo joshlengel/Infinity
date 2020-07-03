@@ -12,6 +12,11 @@
 
 namespace Infinity
 {
+	Resource<Renderer2D> Renderer2D::CreateRenderer2D()
+	{
+		return MakeResource<Renderer2D>();
+	}
+
 	Renderer2D::Renderer2D():
 		m_batched(),
 		m_unbatched(),

@@ -1,11 +1,7 @@
 #include <Infinity.h>
 
-class Example : public Infinity::Application
+class StartState : public Infinity::State
 {
 public:
-	Example() {}
-	~Example() {}
-
-	void OnUserCreate(Infinity::UserCreateEvent *event) override;
-	void OnUserRender(Infinity::UserRenderEvent *event) override;
+	INFINITY_DECLARE_STATE_FUNCTIONS()
 };

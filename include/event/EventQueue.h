@@ -8,7 +8,7 @@
 
 namespace Infinity
 {
-	class EventQueue
+	class INFINITY_API EventQueue
 	{
 	private:
 		Queue<Event*> m_queue;

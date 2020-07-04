@@ -14,7 +14,7 @@
 
 namespace Infinity
 {
-	class BaseWindow : public Window
+	class INFINITY_API BaseWindow : public Window
 	{
 	public:
 		enum class BaseWindowStyle

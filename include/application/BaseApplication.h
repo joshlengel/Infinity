@@ -18,7 +18,7 @@ INFINITY_TEMPLATE template class INFINITY_API std::function<void(Infinity::Event
 
 namespace Infinity
 {
-	class BaseApplication
+	class INFINITY_API BaseApplication
 	{
 		using EventHandler = std::function<void(Event&)>;
 

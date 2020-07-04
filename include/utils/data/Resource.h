@@ -149,6 +149,9 @@ namespace Infinity
 			return *this;
 		}
 
+		unsigned int GetRefCount() const  { return m_control? m_control->ref_count : 0; }
+		unsigned int GetViewCount() const  { return m_control? m_control->view_count : 0; }
+
 		virtual const T *operator->() const { return m_val; }
 		virtual T *operator->() { return m_val;}
 
@@ -314,7 +317,14 @@ namespace Infinity
 
 				if (!m_control->ref_count)
 				{
-					m_deleter(m_val, m_control);
+					if (!m_control->view_count)
+					{
+						m_deleter(m_val, m_control);
+					}
+					else
+					{
+						m_deleter(m_val, nullptr);
+					}
 				}
 			}
 
@@ -339,7 +349,14 @@ namespace Infinity
 
 				if (!m_control->ref_count)
 				{
-					m_deleter(m_val, m_control);
+					if (!m_control->view_count)
+					{
+						m_deleter(m_val, m_control);
+					}
+					else
+					{
+						m_deleter(m_val, nullptr);
+					}
 				}
 			}
 
@@ -361,7 +378,14 @@ namespace Infinity
 
 				if (!m_control->ref_count)
 				{
-					m_deleter(m_val, m_control);
+					if (!m_control->view_count)
+					{
+						m_deleter(m_val, m_control);
+					}
+					else
+					{
+						m_deleter(m_val, nullptr);
+					}
 				}
 			}
 
@@ -385,7 +409,14 @@ namespace Infinity
 
 				if (!m_control->ref_count)
 				{
-					m_deleter(m_val, m_control);
+					if (!m_control->view_count)
+					{
+						m_deleter(m_val, m_control);
+					}
+					else
+					{
+						m_deleter(m_val, nullptr);
+					}
 				}
 			}
 
@@ -408,7 +439,14 @@ namespace Infinity
 
 				if (!m_control->ref_count)
 				{
-					m_deleter(m_val, m_control);
+					if (!m_control->view_count)
+					{
+						m_deleter(m_val, m_control);
+					}
+					else
+					{
+						m_deleter(m_val, nullptr);
+					}
 				}
 
 				m_val = nullptr;
@@ -427,7 +465,14 @@ namespace Infinity
 
 				if (!m_control->ref_count)
 				{
-					m_deleter(m_val, m_control);
+					if (!m_control->view_count)
+					{
+						m_deleter(m_val, m_control);
+					}
+					else
+					{
+						m_deleter(m_val, nullptr);
+					}
 				}
 			}
 		}
@@ -452,6 +497,9 @@ namespace Infinity
 				throw WrongAnyResourceException();
 			}
 		}
+
+		unsigned int GetRefCount() const  { return m_control? m_control->ref_count : 0; }
+		unsigned int GetViewCount() const  { return m_control? m_control->view_count : 0; }
 
 		template <typename T>
 		operator Resource<T>() const { return Get<T>(); }
@@ -652,13 +700,16 @@ namespace Infinity
 			return *this;
 		}
 
+		unsigned int GetRefCount() const  { return m_control? m_control->ref_count : 0; }
+		unsigned int GetViewCount() const  { return m_control? m_control->view_count : 0; }
+
 		const T *operator->() const { return m_val; }
 		T *operator->() { return m_val;}
 
 		const T &operator*() const { return *m_val; }
 		T &operator*() { return *m_val; }
 
-		explicit operator bool() const { return m_control && m_control->view_count; }
+		explicit operator bool() const { return m_control && m_control->ref_count; }
 
 		bool operator==(const ResourceView &resource) const { return m_val == resource.m_val; }
 		bool operator!=(const ResourceView &resource) const { return m_val != resource.m_val; }

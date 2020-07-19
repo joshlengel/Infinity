@@ -113,6 +113,8 @@ namespace Infinity
 			double dt = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
 			t1 = t2;
 
+			m_window_system.GetMainWindow()->MakeContextCurrent();
+
 			state_machine.PushEvents(dt);
 
 			DispatchEvents();

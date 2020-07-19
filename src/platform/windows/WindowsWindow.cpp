@@ -194,7 +194,7 @@ namespace Infinity
 
 		if (m_swap_chain)
 		{
-			m_swap_chain->SetFullscreenState(false, nullptr);
+			// m_swap_chain->SetFullscreenState(false, nullptr);
 
 			m_swap_chain->Release();
 		}
@@ -736,11 +736,16 @@ namespace Infinity
 		m_width = screen_width;
 		m_height = screen_height;
 
+		/* Don't use exclusive mode anymore. So many bugs that it
+		 * isn't worth it
+		 *
+		
 		if (FAILED(m_swap_chain->SetFullscreenState(true, nullptr)))
 		{
 			INFINITY_CORE_ERROR("Error changing to fullscreen state");
 			return;
 		}
+		*/
 
 		if (!SetWindowPos(m_window_handle, HWND_TOP, 0, 0, m_width, m_height, SWP_FRAMECHANGED))
 		{
@@ -756,12 +761,14 @@ namespace Infinity
 
 	void WindowsWindow::ExitFullscreenMode()
 	{
+		/*
 		if (FAILED(m_swap_chain->SetFullscreenState(false, nullptr)))
 		{
 			INFINITY_CORE_ERROR("Error changing to restored state");
 			BaseApplication::GetApplication()->PushEvent(new ApplicationInterruptedEvent);
 			return;
 		}
+		*/
 
 		SetWindowLongA(m_window_handle, GWL_STYLE, WINDOWED_STYLE);
 		SetWindowLongA(m_window_handle, GWL_EXSTYLE, WINDOWED_STYLE_EX);
@@ -795,11 +802,6 @@ namespace Infinity
 
 			if (window->m_fullscreen)
 			{
-				for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
-				{
-					ShowWindow(ResourceCast<WindowsWindow>(window)->m_window_handle, SW_HIDE);
-				}
-
 				window->EnterFullscreenMode();
 
 				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
@@ -807,16 +809,6 @@ namespace Infinity
 			else
 			{
 				window->ExitFullscreenMode();
-
-				for (Resource<Window> window : BaseApplication::GetApplication()->GetWindowSystem().GetChildWindows())
-				{
-					Resource<WindowsWindow> wwin = ResourceCast<WindowsWindow>(window);
-
-					if (wwin->m_showing)
-					{
-						ShowWindow(wwin->m_window_handle, SW_SHOW);
-					}
-				}
 
 				BaseApplication::GetApplication()->PushEvent(new WindowResizedEvent(window->m_width, window->m_height, ResourceCast<Window>(window)));
 			}

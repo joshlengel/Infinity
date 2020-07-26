@@ -6,12 +6,14 @@
 
 #include"Rasterizer.h"
 
+#include"utils/data/Resource.h"
+
 struct ID3D11RasterizerState;
 struct ID3D11BlendState;
 
 namespace Infinity
 {
-	class WindowsRasterizer : public Rasterizer
+	class WindowsRasterizer : public Rasterizer, public ResourceFromThis<WindowsRasterizer>
 	{
 	private:
 		ID3D11RasterizerState *m_raster_state;
@@ -21,7 +23,7 @@ namespace Infinity
 		WindowsRasterizer();
 		~WindowsRasterizer();
 
-		bool Init(CullMode cull, bool blend) override;
+		bool Init(const RasterizerParams &params) override;
 
 		void Bind() override;
 	};

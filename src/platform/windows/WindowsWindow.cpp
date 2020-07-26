@@ -68,7 +68,7 @@ namespace Infinity
 
 		WNDCLASSA wc = {};
 		wc.hInstance = window_instance;
-		wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+		wc.style = CS_OWNDC;
 		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 
 		wc.lpszClassName = CLASS_NAME;
@@ -164,8 +164,7 @@ namespace Infinity
 		m_device_context(nullptr),
 		m_render_target_view(nullptr),
 		m_depth_stencil_buffer(nullptr),
-		m_depth_stencil_view(nullptr),
-		m_depth_stencil_state(nullptr)
+		m_depth_stencil_view(nullptr)
 	{}
 
 	WindowsWindow::~WindowsWindow()
@@ -180,11 +179,6 @@ namespace Infinity
 		if (m_depth_stencil_buffer)
 		{
 			m_depth_stencil_buffer->Release();
-		}
-
-		if (m_depth_stencil_state)
-		{
-			m_depth_stencil_state->Release();
 		}
 
 		if (m_depth_stencil_view)
@@ -362,33 +356,6 @@ namespace Infinity
 		if (FAILED(device_adapter->GetParent(__uuidof(IDXGIFactory), (void**)&device_factory))) return false;
 
 		if (FAILED(device_factory->CreateSwapChain(m_device, &sc_desc, &m_swap_chain))) return false;
-
-		D3D11_DEPTH_STENCIL_DESC ds_desc = {};
-		ds_desc.DepthEnable = true;
-		ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-		ds_desc.DepthFunc = D3D11_COMPARISON_LESS;
-
-		ds_desc.StencilEnable = true;
-		ds_desc.StencilReadMask = 0xff;
-		ds_desc.StencilWriteMask = 0xff;
-
-		ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-		ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-		ds_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		ds_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-
-		ds_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-		ds_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-		ds_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		ds_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-
-		if (FAILED(m_device->CreateDepthStencilState(&ds_desc, &m_depth_stencil_state)))
-		{
-			INFINITY_CORE_ERROR("Error creating depth stencil state");
-			return false;
-		}
-
-		m_device_context->OMSetDepthStencilState(m_depth_stencil_state, 1);
 		
 		// get IDXGIFactory
 
@@ -398,7 +365,7 @@ namespace Infinity
 		device_adapter->Release();
 		device_dxgi->Release();
 
-		m_context = ResourceCast<Context>(MakeResource<WindowsContext>(m_device, m_device_context));
+		m_context = ResourceCast<Context>(MakeResource<WindowsContext>(GetBaseResource(), m_device, m_device_context));
 
 		Resource<Context> restore_context = s_context;
 		s_context = m_context;
@@ -940,6 +907,9 @@ namespace Infinity
 
 			return 0;
 		}
+		case WM_ERASEBKGND:
+			return 0; // Let direct3d take care of this
+
 		default:
 			return DefWindowProcA(window_handle, msg, w_param, l_param);
 		}

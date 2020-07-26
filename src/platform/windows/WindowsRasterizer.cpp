@@ -32,7 +32,7 @@ namespace Infinity
 		}
 	}
 
-	bool WindowsRasterizer::Init(CullMode cull, bool blend)
+	bool WindowsRasterizer::Init(const RasterizerParams &params)
 	{
 		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
@@ -41,7 +41,7 @@ namespace Infinity
 		D3D11_RASTERIZER_DESC raster_desc = {};
 		raster_desc.AntialiasedLineEnable = true;
 		
-		switch (cull)
+		switch (params.cull_mode)
 		{
 		case CullMode::NONE:
 			raster_desc.CullMode = D3D11_CULL_NONE;
@@ -60,14 +60,13 @@ namespace Infinity
 
 		raster_desc.DepthBias = 0;
 		raster_desc.DepthBiasClamp = 0.0f;
+		raster_desc.SlopeScaledDepthBias = 0.0f;
 		raster_desc.DepthClipEnable = true;
 
 		raster_desc.FillMode = D3D11_FILL_SOLID;
 
 		raster_desc.MultisampleEnable = true;
 		raster_desc.ScissorEnable = false;
-
-		raster_desc.SlopeScaledDepthBias = 0.0f;
 
 		if (FAILED(device->CreateRasterizerState(&raster_desc, &m_raster_state)))
 		{
@@ -79,7 +78,7 @@ namespace Infinity
 		blend_desc.AlphaToCoverageEnable = false;
 		blend_desc.IndependentBlendEnable = false;
 
-		blend_desc.RenderTarget[0].BlendEnable = blend;
+		blend_desc.RenderTarget[0].BlendEnable = params.blend_alpha;
 		blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 		blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
@@ -99,6 +98,8 @@ namespace Infinity
 
 	void WindowsRasterizer::Bind()
 	{
+		s_rasterizer = ResourceView<Rasterizer>(ResourceCast<Rasterizer>(GetResourceFromThis()));
+
 		Resource<WindowsContext> context = ResourceCast<WindowsContext>(Window::GetContext());
 
 		ID3D11DeviceContext *device_context = context->GetDeviceContext();

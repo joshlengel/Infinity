@@ -11,6 +11,20 @@ struct ID3DDepthStencilView;
 
 namespace Infinity
 {
+	class WindowsContextSettings : public ContextSettings
+	{
+		friend class WindowsContext;
+
+	private:
+		ID3D11DepthStencilState *m_depth_stencil_state;
+
+	public:
+		WindowsContextSettings();
+		~WindowsContextSettings();
+
+		bool Init(DepthMode depth_mode) override;
+	};
+
 	class WindowsContext : public Context
 	{
 	private:
@@ -22,7 +36,7 @@ namespace Infinity
 		float m_clear_color[4];
 
 	public:
-		WindowsContext(ID3D11Device *device, ID3D11DeviceContext *device_context);
+		WindowsContext(const Resource<Window> &window, ID3D11Device *device, ID3D11DeviceContext *device_context);
 		~WindowsContext();
 
 		bool Init() override;
@@ -31,6 +45,8 @@ namespace Infinity
 
 		void SetClearColor(float r, float g, float b, float a) override;
 		void Clear() override;
+
+		void SetContextSettings(const Resource<ContextSettings> &settings) override;
 
 		ID3D11Device *GetDevice() const;
 		ID3D11DeviceContext *GetDeviceContext() const;

@@ -6,6 +6,8 @@
 #include"Shader.h"
 #include"Texture.h"
 
+#include"Context.h"
+
 #include"utils/Camera.h"
 #include"utils/math/Math.h"
 
@@ -75,6 +77,9 @@ namespace Infinity
 
 		Map<Resource<Texture2D>, Batch*> m_batches;
 
+		Resource<Context> m_context;
+		Resource<ContextSettings> m_restore_context_settings, m_context_settings;
+
 		Renderer2D();
 	
 	public:
@@ -91,4 +96,6 @@ namespace Infinity
 	private:
 		void Flush(Resource<Texture2D> texture, Batch *batch);
 	};
+
+	INFINITY_TEMPLATE template class INFINITY_API Resource<Renderer2D>;
 }

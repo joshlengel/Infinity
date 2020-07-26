@@ -199,6 +199,9 @@ IF EXIST lib\Release-windows-x86_64\Infinity.dll\ (xcopy /Q /E /Y /I lib\Release
     <ClInclude Include="include\Log.h" />
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\Rasterizer.h" />
+    <ClInclude Include="include\renderer2d\Aleph\Component.h" />
+    <ClInclude Include="include\renderer2d\Aleph\Constraint.h" />
+    <ClInclude Include="include\renderer2d\Aleph\GuiCore.h" />
     <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\Texture.h" />
     <ClInclude Include="include\Type.h" />
@@ -241,6 +244,9 @@ IF EXIST lib\Release-windows-x86_64\Infinity.dll\ (xcopy /Q /E /Y /I lib\Release
     </ClCompile>
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\renderer2d\Aleph\Component.cpp" />
+    <ClCompile Include="src\renderer2d\Aleph\Constraint.cpp" />
+    <ClCompile Include="src\renderer2d\Aleph\GuiCore.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Type.cpp" />
     <ClCompile Include="src\VertexLayout.cpp" />

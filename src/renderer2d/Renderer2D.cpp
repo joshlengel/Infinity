@@ -8,6 +8,8 @@
 
 #include"Texture.h"
 
+#include"window/Window.h"
+
 #include"Renderer2DShaderSource.cpp" // contains the source for shaders
 
 namespace Infinity
@@ -30,7 +32,11 @@ namespace Infinity
 
 		m_def_texture(nullptr),
 
-		m_batches()
+		m_batches(),
+
+		m_context(),
+		m_restore_context_settings(),
+		m_context_settings()
 	{}
 
 	Renderer2D::~Renderer2D()
@@ -43,6 +49,15 @@ namespace Infinity
 
 	bool Renderer2D::Init()
 	{
+		m_context = Window::GetContext();
+		m_context_settings = ContextSettings::CreateContextSettings();
+
+		if (!m_context_settings->Init(ContextSettings::DepthMode::ALWAYS))
+		{
+			INFINITY_CORE_ERROR("Error creating Renderer2D context settings");
+			return false;
+		}
+
 		m_batched.v_buff = VertexBuffer::CreateVertexBuffer({
 			{ String("position"),   DataType::FLOAT2 },
 			{ String("color"),      DataType::FLOAT4 },
@@ -179,6 +194,15 @@ namespace Infinity
 
 	void Renderer2D::StartScene(const Camera *camera)
 	{
+		if (m_context != Window::GetContext())
+		{
+			INFINITY_CORE_ERROR("Context which created Renderer2D and bound context are different. Make sure to bind appropriate context before rendering");
+			return;
+		}
+
+		m_restore_context_settings = m_context->GetContextSettings();
+		m_context->SetContextSettings(m_context_settings);
+
 		const Mat4f &pv = camera? camera->GetProjectionViewMatrix() : Mat4f();
 
 		// batched
@@ -343,5 +367,8 @@ namespace Infinity
 				Flush(entry.key, entry.value);
 			}
 		}
+
+		m_context->SetContextSettings(m_restore_context_settings);
+		m_restore_context_settings = nullptr; // Don't keep resource alive
 	}
 }

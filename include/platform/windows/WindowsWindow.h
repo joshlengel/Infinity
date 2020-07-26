@@ -24,7 +24,6 @@ struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct ID3D11RenderTargetView;
 struct ID3D11DepthStencilView;
-struct ID3D11DepthStencilState;
 struct ID3D11Texture2D;
 
 namespace Infinity
@@ -73,7 +72,6 @@ namespace Infinity
 		ID3D11DeviceContext *m_device_context;
 		ID3D11RenderTargetView *m_render_target_view;
 		ID3D11DepthStencilView *m_depth_stencil_view;
-		ID3D11DepthStencilState *m_depth_stencil_state;
 		ID3D11Texture2D *m_depth_stencil_buffer;
 
 	public:

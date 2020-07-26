@@ -39,4 +39,8 @@
 
 #include"renderer2d\Renderer2D.h"
 
+#include"renderer2d\Aleph\GuiCore.h"
+#include"renderer2d\Aleph\Component.h"
+#include"renderer2d\Aleph\Constraint.h"
+
 #include"EntryPoint.h"
